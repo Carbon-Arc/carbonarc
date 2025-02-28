@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=63", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "carbonarc"
+description = "Carbon Arc API Library"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.9"
+keywords = ["Insights", "Data", "Carbon Arc"]
+authors = [{ name = "Carbon Arc Team", email = "support@carbonarc.co" }]
+dependencies = [
+    "requests~=2.31.0",
+    "beautifulsoup4~=4.12.2",
+    "Click==8.1.7",
+    "psutil==5.8.0"
+]
+dynamic = ["version"]
+
+[project.urls]
+"Github Repository" = "https://github.com/Carbon-Arc/carbonarc/"
+"Bug Reports" = "https://github.com/Carbon-Arc/carbonarc/issues"
+
+[project.scripts]
+pyca = "carbonarc_cli.cli:cli"
+
+[tool.setuptools.package-data]
+pyca = ["carbonarc/*"]
+pyca_cli = ["carbonarc_cli/*"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["carbonarc", "carbonarc_cli"]
+
+[tool.ruff]
+ignore-init-module-imports = true
