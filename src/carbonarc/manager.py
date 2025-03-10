@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.auth import AuthBase
 
-from carbonarc.exceptions import AuthenticationException
+from carbonarc.exceptions import AuthenticationError
 
 
 class HttpRequestManager:
@@ -14,11 +14,26 @@ class HttpRequestManager:
     making Http request calls
     """
 
-    def __init__(self, auth_token: AuthBase):
+    def __init__(
+        self, auth_token: AuthBase, user_agent: str = "Python-APIClient/0.1.0"
+    ):
+        """
+        Initialize the HttpRequestManager with an authentication token and user agent.
+        :param auth_token: The authentication token to be used for requests.
+        :param user_agent: The user agent string to be used for requests.
+        """
+        if not isinstance(auth_token, AuthBase):
+            raise ValueError("auth_token must be an instance of requests.auth.AuthBase")
+
         self.auth_token = auth_token
         self._logger = logging.getLogger(__name__)
         self.request_session = requests.Session()
-
+        self.request_session.headers.update(
+            {
+                "User-Agent": user_agent,
+                "Accept": "application/json",
+            }
+        )
 
     def post(self, url, data=None, json=None, **kwargs) -> requests.Response:
         return self._raise_for_status(
@@ -49,8 +64,11 @@ class HttpRequestManager:
             self.request_session.delete(url, auth=self.auth_token, **kwargs)
         )
 
-    def get_raw(self, url):
-        return self.get(url, stream=True).raw
+    def get_stream(self, url, **kwargs) -> requests.Response:
+        self.request_session.headers.update({"Accept": "application/octet-stream"})
+        return self._raise_for_status(
+            self.request_session.get(url, auth=self.auth_token, stream=True, **kwargs)
+        )
 
     def _raise_for_status(self, response: requests.Response) -> requests.Response:
         try:

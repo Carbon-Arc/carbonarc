@@ -1,10 +1,28 @@
 class CarbonArcException(Exception):
-    """Base class for Carbon Arc Exceptions"""
+    """Base exception for all errors."""
 
+    def __init__(self, message, status_code=None, response=None):
+        self.message = message
+        self.status_code = status_code
+        self.response = response
+        super().__init__(self.message)
+
+
+class AuthenticationError(CarbonArcException):
+    """Raised when authentication fails."""
     pass
 
 
-class AuthenticationException(CarbonArcException):
-    """Valid Token required Exception"""
+class NotFoundError(CarbonArcException):
+    """Raised when a resource is not found."""
+    pass
 
+
+class ValidationError(CarbonArcException):
+    """Raised when request validation fails."""
+    pass
+
+
+class RateLimitError(CarbonArcException):
+    """Raised when API rate limit is exceeded."""
     pass
