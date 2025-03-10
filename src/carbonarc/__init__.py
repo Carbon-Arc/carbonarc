@@ -1,5 +1,5 @@
-from carbonarc.client import PowerAPIClient
-from carbonarc.exceptions import CarbonArcException, AuthenticationError, NotFoundError, ValidationError, RateLimitError 
+from carbonarc.client import APIClient
+from carbonarc.exceptions import AuthenticationError, NotFoundError, ValidationError, RateLimitError 
 
-__all__ = ["APIClient", "APIError", "AuthenticationError", "NotFoundError", "ValidationError", "RateLimitError"]
+__all__ = ["APIClient", "AuthenticationError", "NotFoundError", "ValidationError", "RateLimitError"]
 __version__ = "0.0.1"

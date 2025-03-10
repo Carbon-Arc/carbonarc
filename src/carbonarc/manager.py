@@ -75,7 +75,7 @@ class HttpRequestManager:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == HTTPStatus.CONFLICT:
-                raise AuthenticationException("Conflict error")
+                raise AuthenticationError("Conflict error")
             if not bool(BeautifulSoup(e.response.text, "html.parser").find()):
                 self._logger.error(e.response.text)
             else:
