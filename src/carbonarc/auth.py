@@ -7,6 +7,7 @@ class TokenAuth(AuthBase):
     """
 
     def __init__(self, token: str):
+        assert token, "Token must be a non-empty string."
         self.auth_token = token
 
     def __call__(self, r):

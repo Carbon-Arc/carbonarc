@@ -1,30 +1,28 @@
 import os
 import logging
-from typing import Literal, Optional, List
+from typing import Literal, Optional
 import pandas as pd
 
 from carbonarc.auth import TokenAuth
-from carbonarc.exceptions import AuthenticationError
 from carbonarc.manager import HttpRequestManager
 from carbonarc.routes import Routes
 
 
 class APIClient:
     """
-    A client for interacting with the Carbon Arc Power API.
+    A client for interacting with the Carbon Arc API.
     """
 
     def __init__(
-        self, auth_token: TokenAuth, user_agent: str = "Python-APIClient/0.1.0"
+        self, token: str, user_agent: str = "Python-APIClient/0.1.0"
     ):
         """
-        Initialize the PowerAPIClient with an authentication token and user agent.
+        Initialize theAPIClient with an authentication token and user agent.
         :param auth_token: The authentication token to be used for requests.
         :param user_agent: The user agent string to be used for requests.
         """
-
         self._logger = logging.getLogger(__name__)
-        self.auth_token = auth_token
+        self.auth_token = TokenAuth(token)
         self._routes = Routes()
         self.request_manager = HttpRequestManager(auth_token=self.auth_token)
         self.user_agent = user_agent
@@ -32,12 +30,12 @@ class APIClient:
     def _get(self, url: str, **kwargs):
         return self.request_manager.get(url, **kwargs).json()
 
-    def _post(self, url: str, **kwargs):
+    def _post(self, url: str, **kwargs) -> dict:
         return self.request_manager.post(url, **kwargs).json()
 
     def get_insights_data_idetifiers(self, page: int = 1, page_size: int = 100) -> dict:
         """
-        Get the list of data identifiers from the Carbon Arc Power API.
+        Get the list of data identifiers from the Carbon Arc API.
         :param page: The page number to retrieve.
         :param page_size: The number of items per page.
         :return: A dictionary containing the list of data identifiers.
@@ -48,7 +46,7 @@ class APIClient:
 
     def get_insight_metadata(self, data_identifier: str) -> dict:
         """
-        Get the metadata for a specific data identifier from the Carbon Arc Power API.
+        Get the metadata for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve metadata for.
         :return: A dictionary containing the metadata for the specified data identifier.
         """
@@ -59,7 +57,7 @@ class APIClient:
 
     def get_insight_filters(self, data_identifier: str) -> dict:
         """
-        Get the filters for a specific data identifier from the Carbon Arc Power API.
+        Get the filters for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve filters for.
         :return: A dictionary containing the filters for the specified data identifier.
         """
@@ -70,7 +68,7 @@ class APIClient:
 
     def get_insight_filter_values(self, data_identifier: str, filter_key: str) -> dict:
         """
-        Get the filter values for a specific data identifier from the Carbon Arc Power API.
+        Get the filter values for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve filter values for.
         :param filter_key: The key of the filter to retrieve values for.
         :return: A dictionary containing the filter values for the specified data identifier.
@@ -90,7 +88,7 @@ class APIClient:
         aggregation: Literal["sum", "mean", "avg"] = "sum",
     ) -> dict:
         """
-        Get the data for a specific data identifier from the Carbon Arc Power API.
+        Get the data for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve.
         :param payload: The payload to send with the request.
         :param page: The page number to retrieve.
@@ -116,9 +114,9 @@ class APIClient:
         page_size: int = 100,
         data_type: Literal["dataframe", "timeseries"] = "dataframe",
         aggregation: Literal["sum", "mean", "avg"] = "sum",
-    ) -> dict:
+    ):
         """
-        Iterate over the data for a specific data identifier from the Carbon Arc Power API.
+        Iterate over the data for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve.
         :param payload: The payload to send with the request.
         :param page_size: The number of items per page.
@@ -136,6 +134,8 @@ class APIClient:
                 data_type=data_type,
                 aggregation=aggregation,
             )
+            if not response:
+                break  # Exit if the response is None or invalid
             total_pages = response.get("pages", 0)
             if page > total_pages:
                 break
@@ -152,7 +152,7 @@ class APIClient:
         aggregation: Literal["sum", "mean", "avg"] = "sum",
     ) -> pd.DataFrame:
         """
-        Get the data for a specific data identifier from the Carbon Arc Power API.
+        Get the data for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve.
         :param payload: The payload to send with the request.
         :param page: The page number to retrieve.
@@ -178,9 +178,9 @@ class APIClient:
         page_size: int = 100,
         data_type: Literal["dataframe", "timeseries"] = "dataframe",
         aggregation: Literal["sum", "mean", "avg"] = "sum",
-    ) -> List[pd.DataFrame]:
+    ):
         """
-        Iterate over the data for a specific data identifier from the Carbon Arc Power API.
+        Iterate over the data for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve.
         :param payload: The payload to send with the request.
         :param page_size: The number of items per page.
@@ -206,7 +206,7 @@ class APIClient:
 
     def get_alldata_data_idetifiers(self) -> dict:
         """
-        Get the list of data identifiers from the Carbon Arc Power API.
+        Get the list of data identifiers from the Carbon Arc API.
         :return: A dictionary containing the list of data identifiers.
         """
         url = self._routes._build_all_data_identifiers_url()
@@ -214,7 +214,7 @@ class APIClient:
 
     def get_alldata_data_metadata(self, data_identifier: str) -> dict:
         """
-        Get the metadata for a specific data identifier from the Carbon Arc Power API.
+        Get the metadata for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve metadata for.
         :return: A dictionary containing the metadata for the specified data identifier.
         """
@@ -225,7 +225,7 @@ class APIClient:
 
     def get_alldata_data_sample(self, data_identifier: str) -> dict:
         """
-        Get the sample data for a specific data identifier from the Carbon Arc Power API.
+        Get the sample data for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve sample data for.
         :return: A dictionary containing the sample data for the specified data identifier.
         """
@@ -236,7 +236,7 @@ class APIClient:
 
     def get_alldata_data_manifest(self, data_identifier: str) -> dict:
         """
-        Get the manifest for a specific data identifier from the Carbon Arc Power API.
+        Get the manifest for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve manifest for.
         :return: A dictionary containing the manifest for the specified data identifier.
         """
@@ -251,7 +251,7 @@ class APIClient:
         chunk_size: int = 1024 * 1024 * 250,  # 250MB
     ):
         """
-        Download a file stream from the Carbon Arc Power API.
+        Download a file stream from the Carbon Arc API.
         :param url: The URL of the file to download.
         :param chunk_size: The size of each chunk to download.
         :return: A generator yielding the raw stream of the file.
@@ -284,7 +284,7 @@ class APIClient:
         chunk_size: int = 1024 * 1024 * 250,  # 250MB
     ) -> str:
         """
-        Download a file from the Carbon Arc Power API.
+        Download a file from the Carbon Arc API.
         :param url: The URL of the file to download.
         :param output_dir: The directory to save the downloaded file.
         :param filename: The name of the file to save.
@@ -311,7 +311,7 @@ class APIClient:
 
     def get_graph_data_idetifiers(self) -> dict:
         """
-        Get the list of graph data identifiers from the Carbon Arc Power API.
+        Get the list of graph data identifiers from the Carbon Arc API.
         :return: A dictionary containing the list of graph data identifiers.
         """
         url = self._routes._build_graph_data_identifiers_url()
