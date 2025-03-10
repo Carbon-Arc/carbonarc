@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from pprint import pprint
-from carbonarc import PowerAPIClient
+from carbonarc import APIClient
 from carbonarc.auth import TokenAuth
 
 # Required environment variables
@@ -10,7 +10,7 @@ assert API_AUTH_TOKEN, "API_AUTH_TOKEN environment variable is not set."
 
 # Initialize the API client with authentication
 auth = TokenAuth(API_AUTH_TOKEN)
-client = PowerAPIClient(auth_token=auth)
+client = APIClient(auth_token=auth)
 
 # Get insights data identifiers
 data_identifiers = client.get_insights_data_idetifiers(page=1, page_size=10)

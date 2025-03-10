@@ -9,7 +9,7 @@ from carbonarc.manager import HttpRequestManager
 from carbonarc.routes import Routes
 
 
-class PowerAPIClient:
+class APIClient:
     """
     A client for interacting with the Carbon Arc Power API.
     """
