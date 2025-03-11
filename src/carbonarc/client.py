@@ -6,6 +6,7 @@ import pandas as pd
 from carbonarc.auth import TokenAuth
 from carbonarc.manager import HttpRequestManager
 from carbonarc.routes import Routes
+import carbonarc.utils as Utils
 
 
 class APIClient:
@@ -169,7 +170,10 @@ class APIClient:
             data_type=data_type,
             aggregation=aggregation,
         )
-        return pd.DataFrame(response["data"])
+        if data_type == "dataframe":
+            return pd.DataFrame(response["data"])
+        elif data_type == "timeseries":
+            return Utils.timeseries_response_to_pandas(response=response)
 
     def iter_insight_data_pandas(
         self,
@@ -196,7 +200,10 @@ class APIClient:
             data_type=data_type,
             aggregation=aggregation,
         ):
-            yield pd.DataFrame(response["data"])
+            if data_type == "dataframe":
+                yield pd.DataFrame(response["data"])
+            elif data_type == "timeseries":
+                yield Utils.timeseries_response_to_pandas(response=response)
 
     def get_alldata_data_idetifiers(self) -> dict:
         """
