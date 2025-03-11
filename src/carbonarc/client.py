@@ -161,15 +161,15 @@ class APIClient:
         :param aggregation: The aggregation method to use.
         :return: A pandas DataFrame containing the data for the specified data identifier.
         """
-        url = self._routes._build_data_identifiers_data_url(
+        response = self.get_insight_data(
             data_identifier=data_identifier,
+            payload=payload,
             page=page,
             page_size=page_size,
             data_type=data_type,
             aggregation=aggregation,
         )
-        resposne = self._post(url, json=payload)
-        return pd.DataFrame(resposne["data"])
+        return pd.DataFrame(response["data"])
 
     def iter_insight_data_pandas(
         self,
@@ -189,20 +189,14 @@ class APIClient:
         aggregation: The aggregation method to use.
         :return: A generator that yields pandas DataFrames containing the data for the specified data identifier.
         """
-        page = 1
-        while True:
-            data = self.get_insight_data_pandas(
-                data_identifier=data_identifier,
-                payload=payload,
-                page=page,
-                page_size=page_size,
-                data_type=data_type,
-                aggregation=aggregation,
-            )
-            if data.empty:
-                break
-            yield data
-            page += 1
+        for response in self.iter_insight_data(
+            data_identifier=data_identifier,
+            payload=payload,
+            page_size=page_size,
+            data_type=data_type,
+            aggregation=aggregation,
+        ):
+            yield pd.DataFrame(response["data"])
 
     def get_alldata_data_idetifiers(self) -> dict:
         """
@@ -260,7 +254,7 @@ class APIClient:
         for chunk in response.iter_content(chunk_size=chunk_size):
             yield chunk
     
-    def download_alldata_data_file(self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250):
+    def download_alldata_data_to_file(self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250):
         """
         Download data for a specific data identifier and save it to a file.
         :param url: The URL of the file to download.
@@ -273,41 +267,8 @@ class APIClient:
             raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
         
         with open(output_file, 'wb') as f:
-            for chunk in self.download_alldata_data_stream(url, chunk_size):
+            for chunk in self.get_alldata_data_stream(url, chunk_size):
                 f.write(chunk)
-
-    def download_alldata_data_to_file(
-        self,
-        url: str,
-        output_dir: str,
-        filename: Optional[str] = None,
-        chunk_size: int = 1024 * 1024 * 250,  # 250MB
-    ) -> str:
-        """
-        Download a file from the Carbon Arc API.
-        :param url: The URL of the file to download.
-        :param output_dir: The directory to save the downloaded file.
-        :param filename: The name of the file to save.
-        :param chunk_size: The size of each chunk to download.
-        :return: The path to the downloaded file.
-        """
-        # check if output_dir exists
-        if not os.path.exists(output_dir):
-            raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
-
-        response = self.request_manager.get_stream(url)
-        # Extract filename from response headers
-        if not filename:
-            filename = (
-                response.headers["Content-Disposition"].split("filename=")[1].strip('"')
-            )
-        # Update the output path to include the filename
-        output = os.path.join(output_dir, filename)
-        # Download the file in chunks
-        with open(output, "wb") as file:
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                file.write(chunk)
-        return output
 
     def get_graph_data_idetifiers(self) -> dict:
         """

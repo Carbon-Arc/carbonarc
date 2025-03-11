@@ -61,3 +61,20 @@ filter_values = client.get_insight_filter_values(data_identifier, filter_key)
 print(f"Filter values for {filter_key} in {data_identifier}:")
 pprint(filter_values)
 ```
+
+### Get insights data
+
+```python
+insights_data = client.get_insights_data(data_identifier, page=1, page_size=10)
+print(f"Insights data for {data_identifier}:")
+pprint(insights_data)
+```
+
+### Get insights data as pandas DataFrame
+
+```python
+import pandas as pd
+insights_df = client.get_insights_data_pandas(data_identifier, page=1, page_size=10)
+print(f"Insights data for {data_identifier} as DataFrame:")
+print(insights_df)
+```
