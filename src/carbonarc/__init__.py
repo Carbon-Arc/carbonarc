@@ -1,5 +1,13 @@
-from carbonarc.client import APIClient
-from carbonarc.exceptions import AuthenticationError, NotFoundError, ValidationError, RateLimitError 
+try:
+    from importlib.metadata import version, PackageNotFoundError
+    try:
+        __version__ = version("carbonarc")
+    except PackageNotFoundError:
+        __version__ = "unkown"
+except ImportError:
+    __version__ = "unkown"
 
-__all__ = ["APIClient", "AuthenticationError", "NotFoundError", "ValidationError", "RateLimitError"]
-__version__ = "0.0.1"
+from carbonarc.client import APIClient
+
+
+__all__ = ["APIClient"]

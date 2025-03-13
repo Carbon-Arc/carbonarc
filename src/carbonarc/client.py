@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Literal, Optional
+from typing import Literal
 import pandas as pd
 
 from carbonarc.auth import TokenAuth
@@ -14,9 +14,7 @@ class APIClient:
     A client for interacting with the Carbon Arc API.
     """
 
-    def __init__(
-        self, token: str, user_agent: str = "Python-APIClient/0.1.0"
-    ):
+    def __init__(self, token: str):
         """
         Initialize theAPIClient with an authentication token and user agent.
         :param auth_token: The authentication token to be used for requests.
@@ -26,7 +24,6 @@ class APIClient:
         self.auth_token = TokenAuth(token)
         self._routes = Routes()
         self.request_manager = HttpRequestManager(auth_token=self.auth_token)
-        self.user_agent = user_agent
 
     def _get(self, url: str, **kwargs):
         return self.request_manager.get(url, **kwargs).json()
@@ -245,7 +242,7 @@ class APIClient:
             data_identifier=data_identifier
         )
         return self._get(url)
-    
+
     def get_alldata_data_stream(
         self,
         url: str,
@@ -260,8 +257,10 @@ class APIClient:
         response = self.request_manager.get_stream(url)
         for chunk in response.iter_content(chunk_size=chunk_size):
             yield chunk
-    
-    def download_alldata_data_to_file(self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250):
+
+    def download_alldata_data_to_file(
+        self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250
+    ):
         """
         Download data for a specific data identifier and save it to a file.
         :param url: The URL of the file to download.
@@ -272,8 +271,8 @@ class APIClient:
         output_dir = os.path.dirname(output_file)
         if not os.path.exists(output_dir):
             raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
-        
-        with open(output_file, 'wb') as f:
+
+        with open(output_file, "wb") as f:
             for chunk in self.get_alldata_data_stream(url, chunk_size):
                 f.write(chunk)
 
