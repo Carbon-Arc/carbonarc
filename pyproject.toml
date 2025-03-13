@@ -4,7 +4,7 @@ version = "0.0.1"
 description = "Carbon Arc - Python Package"
 authors = ["Carbon Arc <support@carbonarc.co>"]
 readme = "README.md"
-packages = [{include = "carbonarc", from = "src"}]
+packages = [{include = "carbonarc", from = "src"}, {include = "carbonarc_cli", from = "src"}]
 license = "MIT License"
 repository = "https://github.com/Carbon-Arc/carbonarc.git"
 python = "^3.9"
@@ -19,6 +19,7 @@ carbonarc = "carbonarc_cli.cli:cli"
 
 [tool.setuptools.package-data]
 carbonarc = ["carbonarc/*"]
+carbonarc_cli = ["carbonarc_cli/*"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
