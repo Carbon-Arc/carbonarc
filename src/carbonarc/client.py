@@ -31,7 +31,7 @@ class APIClient:
     def _post(self, url: str, **kwargs) -> dict:
         return self.request_manager.post(url, **kwargs).json()
 
-    def get_insights_data_idetifiers(self, page: int = 1, page_size: int = 100) -> dict:
+    def get_insights_data_identifiers(self, page: int = 1, page_size: int = 100) -> dict:
         """
         Get the list of data identifiers from the Carbon Arc API.
         :param page: The page number to retrieve.
@@ -202,7 +202,7 @@ class APIClient:
             elif data_type == "timeseries":
                 yield Utils.timeseries_response_to_pandas(response=response)
 
-    def get_alldata_data_idetifiers(self) -> dict:
+    def get_alldata_data_identifiers(self) -> dict:
         """
         Get the list of data identifiers from the Carbon Arc API.
         :return: A dictionary containing the list of data identifiers.
