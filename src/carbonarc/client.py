@@ -276,7 +276,7 @@ class APIClient:
             for chunk in self.get_alldata_data_stream(url, chunk_size):
                 f.write(chunk)
 
-    def get_graph_data_idetifiers(self) -> dict:
+    def get_graph_data_identifiers(self) -> dict:
         """
         Get the list of graph data identifiers from the Carbon Arc API.
         :return: A dictionary containing the list of graph data identifiers.

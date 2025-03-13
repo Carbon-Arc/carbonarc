@@ -28,7 +28,7 @@ client = APIClient(
 ### Get insights data identifiers
 
 ```python
-data_identifiers = client.get_insights_data_idetifiers(page=1, page_size=10)
+data_identifiers = client.get_insights_data_identifiers(page=1, page_size=10)
 print("Data Identifiers:")
 data_ids = data_identifiers["data"]
 for data_id in data_identifiers["data"]:
