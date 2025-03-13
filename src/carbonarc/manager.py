@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.auth import AuthBase
 
+from carbonarc import __version__
 from carbonarc.exceptions import AuthenticationError
 
 
@@ -15,7 +16,7 @@ class HttpRequestManager:
     """
 
     def __init__(
-        self, auth_token: AuthBase, user_agent: str = "Python-APIClient/0.1.0"
+        self, auth_token: AuthBase, user_agent: str = f"Python-APIClient/{__version__}"
     ):
         """
         Initialize the HttpRequestManager with an authentication token and user agent.

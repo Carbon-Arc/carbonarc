@@ -52,7 +52,7 @@ def cli(ctx, verbose: int):
 
 
 ###########
-# carbonarc CLI
+# PyCA CLI
 ###########
 @cli.group()
 @click.pass_obj
@@ -61,47 +61,5 @@ def package(ctx):
     pass
 
 
-######################
-# Package Sub commands
-######################
-
-
-@package.command(help="Get carbonarc package version")
-@click.pass_obj
-def version(ctx):
-    """Get carbonarc package version"""
-    from pyca_cli.package import Package
-
-    pkg = Package()
-    pkg.version()
-
-
-@package.command(help="Release new carbonarc package")
-@click.option(
-    "-v",
-    "--version",
-    type=click.STRING,
-    help="Optional force version (NOT RECOMMENDED)",
-)
-@click.pass_obj
-def release(ctx, version: str):
-    """
-    Release new carbonarc package.
-
-    Args:
-        version (str): Optional force version (NOT RECOMMENDED)
-    """
-    from pyca_cli.package import Package
-
-    pkg = Package()
-    pkg.release(version=version)
-
-
-@package.command(help="Update Documentation")
-@click.pass_obj
-def docs(ctx):
-    """Update Documentation on dev branch"""
-    from pyca_cli.package import Package
-
-    pkg = Package()
-    pkg.docs()
+if __name__ == "__main__":
+    cli()
