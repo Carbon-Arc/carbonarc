@@ -13,6 +13,7 @@ python = "^3.9"
 requests = "^2.31.0"
 pandas = "^2.2.3"
 beautifulsoup4 = "^4.12.2"
+Click = "^8.1.7"
 
 [tool.poetry.scripts]
 carbonarc = "carbonarc_cli.cli:cli"

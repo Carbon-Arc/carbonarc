@@ -51,9 +51,9 @@ def cli(ctx, verbose: int):
         )
 
 
-###########
-# PyCA CLI
-###########
+################
+# Carbon Arc CLI
+################
 @cli.group()
 @click.pass_obj
 def package(ctx):
