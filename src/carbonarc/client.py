@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Literal
+from typing import Literal, Optional, List
 import pandas as pd
 
 from carbonarc.auth import TokenAuth
@@ -31,7 +31,8 @@ class APIClient:
     def _post(self, url: str, **kwargs) -> dict:
         return self.request_manager.post(url, **kwargs).json()
 
-    def get_insights_data_identifiers(self, page: int = 1, page_size: int = 100) -> dict:
+    # INSIGHTS
+    def get_insight_data_identifiers(self, page: int = 1, page_size: int = 100) -> dict:
         """
         Get the list of data identifiers from the Carbon Arc API.
         :param page: The page number to retrieve.
@@ -39,7 +40,7 @@ class APIClient:
         :return: A dictionary containing the list of data identifiers.
         """
         # Build the URL for the data identifiers endpoint
-        url = self._routes._build_data_identifiers_url(page=page, page_size=page_size)
+        url = self._routes._build_insight_data_identifiers_url(page=page, page_size=page_size)
         return self._get(url)
 
     def get_insight_metadata(self, data_identifier: str) -> dict:
@@ -48,7 +49,7 @@ class APIClient:
         :param data_identifier: The identifier of the data to retrieve metadata for.
         :return: A dictionary containing the metadata for the specified data identifier.
         """
-        url = self._routes._build_data_identifier_metadata_url(
+        url = self._routes._build_insight_metadata_url(
             data_identifier=data_identifier
         )
         return self._get(url)
@@ -59,11 +60,22 @@ class APIClient:
         :param data_identifier: The identifier of the data to retrieve filters for.
         :return: A dictionary containing the filters for the specified data identifier.
         """
-        url = self._routes._build_data_identifiers_filters_url(
+        url = self._routes._build_insight_filters_url(
             data_identifier=data_identifier
         )
         return self._get(url)
 
+    def get_insight_confidence(self, data_identifier: str) -> dict:
+        """
+        Get the confidence for a specific data identifier to the Carbon Arc API.
+        :param data_identifier: The identifier of the data to retrieve filters for.
+        :return: A dictionary containing the confidence for the specified data identifier.
+        """
+        url = self._routes._build_insight_confidence_url(
+            data_identifier=data_identifier
+        )
+        return self._post(url)
+    
     def get_insight_filter_values(self, data_identifier: str, filter_key: str) -> dict:
         """
         Get the filter values for a specific data identifier from the Carbon Arc API.
@@ -71,7 +83,7 @@ class APIClient:
         :param filter_key: The key of the filter to retrieve values for.
         :return: A dictionary containing the filter values for the specified data identifier.
         """
-        url = self._routes._build_data_identifiers_filter_values_url(
+        url = self._routes._build_insight_filter_values_url(
             data_identifier=data_identifier, filter_key=filter_key
         )
         return self._get(url)
@@ -96,7 +108,7 @@ class APIClient:
         :param aggregation: The aggregation method to use.
         :return: A dictionary containing the data for the specified data identifier.
         """
-        url = self._routes._build_data_identifiers_data_url(
+        url = self._routes._build_insight_data_url(
             data_identifier=data_identifier,
             page=page,
             page_size=page_size,
@@ -202,48 +214,49 @@ class APIClient:
             elif data_type == "timeseries":
                 yield Utils.timeseries_response_to_pandas(response=response)
 
+    # ALL DATA
     def get_alldata_data_identifiers(self) -> dict:
         """
         Get the list of data identifiers from the Carbon Arc API.
         :return: A dictionary containing the list of data identifiers.
         """
-        url = self._routes._build_all_data_identifiers_url()
+        url = self._routes._build_alldata_data_identifiers_url()
         return self._get(url)
 
-    def get_alldata_data_metadata(self, data_identifier: str) -> dict:
+    def get_alldata_metadata(self, data_identifier: str) -> dict:
         """
         Get the metadata for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve metadata for.
         :return: A dictionary containing the metadata for the specified data identifier.
         """
-        url = self._routes._build_builk_identifier_metadata_url(
+        url = self._routes._build_alldata_metadata_url(
             data_identifier=data_identifier
         )
         return self._get(url)
 
-    def get_alldata_data_sample(self, data_identifier: str) -> dict:
+    def get_alldata_sample(self, data_identifier: str) -> dict:
         """
         Get the sample data for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve sample data for.
         :return: A dictionary containing the sample data for the specified data identifier.
         """
-        url = self._routes._build_builk_identifier_sample_url(
+        url = self._routes._build_alldata_sample_url(
             data_identifier=data_identifier
         )
         return self._get(url)
 
-    def get_alldata_data_manifest(self, data_identifier: str) -> dict:
+    def get_alldata_manifest(self, data_identifier: str) -> dict:
         """
         Get the manifest for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve manifest for.
         :return: A dictionary containing the manifest for the specified data identifier.
         """
-        url = self._routes._build_builk_identifier_manifest_url(
+        url = self._routes._build_alldata_manifest_url(
             data_identifier=data_identifier
         )
         return self._get(url)
 
-    def get_alldata_data_stream(
+    def stream_alldata(
         self,
         url: str,
         chunk_size: int = 1024 * 1024 * 250,  # 250MB
@@ -258,7 +271,7 @@ class APIClient:
         for chunk in response.iter_content(chunk_size=chunk_size):
             yield chunk
 
-    def download_alldata_data_to_file(
+    def download_alldata_to_file(
         self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250
     ):
         """
@@ -273,13 +286,156 @@ class APIClient:
             raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
 
         with open(output_file, "wb") as f:
-            for chunk in self.get_alldata_data_stream(url, chunk_size):
+            for chunk in self.stream_alldata(url, chunk_size):
                 f.write(chunk)
 
+    # GRAPH DATA
     def get_graph_data_identifiers(self) -> dict:
         """
         Get the list of graph data identifiers from the Carbon Arc API.
         :return: A dictionary containing the list of graph data identifiers.
         """
-        url = self._routes._build_graph_data_identifiers_url()
+        url = self._routes._build_graphdata_data_identifiers_url()
         return self._get(url)
+
+    # ONTOLOGY    
+    def get_ontology_representations(self, entity:Optional[List[str]]=None, domain:Optional[List[str]]=None) -> dict:
+        """
+        Get the entity representation from the Carbon Arc API.
+        :param entity: The entity to retrieve the representation for.
+        :param domain: The domain to retrieve the representation for.
+        :return: A dictionary containing the entity representation.
+        """
+        url = self._routes._build_ontology_representations_url(entity=entity, domain=domain)
+        return self._get(url)
+    
+    def get_ontology_entities(
+        self,
+        entity: Optional[List[str]] = None,
+        domain: Optional[List[str]] = None,
+        representation: Optional[List[str]] = None,
+        search: Optional[str] = None,
+        min_score: float = 0.6,
+        page: int = 1,
+        page_size: int = 100,
+    ) -> dict:
+        """
+        Get the data for a specific data identifier from the Carbon Arc API.
+        :param data_identifier: The identifier of the data to retrieve.
+        :param payload: The payload to send with the request.
+        :param page: The page number to retrieve.
+        :param page_size: The number of items per page.
+        :param
+        data_type: The type of data to retrieve.
+        :param aggregation: The aggregation method to use.
+        :return: A dictionary containing the data for the specified data identifier.
+        """
+        url = self._routes._build_ontology_entities_url(
+            entity=entity,
+            domain=domain,
+            representation=representation,
+            search=search,
+            min_score=min_score,
+            page=page,
+            page_size=page_size,
+        )
+        return self._get(url)
+
+    def iter_ontology_entities(
+        self,
+        page_size: int = 100,
+    ):
+        """
+        Iterate over the data for a specific data identifier from the Carbon Arc API.
+        :param data_identifier: The identifier of the data to retrieve.
+        :param payload: The payload to send with the request.
+        :param page_size: The number of items per page.
+        :param data_type: The type of data to retrieve.
+        :param aggregation: The aggregation method to use.
+        :return: A generator that yields the data for the specified data identifier.
+        """
+        page = 1
+        while True:
+            response = self.get_ontology_entities(
+                page=page,
+                page_size=page_size,
+            )
+            if not response:
+                break  # Exit if the response is None or invalid
+            total_pages = response.get("entities", 0)
+            if page > total_pages:
+                break
+            yield response
+            page += 1
+    
+    def get_ontology_core_entities(self) -> dict:
+        # brand, company, people, location
+        raise NotImplementedError("get_ontology_core_entities is not implemented yet.")
+    
+    def get_ontology_domains(self, entity:Optional[str]=None) -> dict:
+        # domains
+        # optional filter by core entity
+        raise NotImplementedError("get_ontology_domains is not implemented yet.")
+    
+    def get_ontology_framework(self, entity:Optional[List[str]]=None, domain:Optional[List[str]]=None, representation:Optional[List[str]]=None) -> dict:
+        # entity, domain, representation
+        # optional filter by core entity, domain, representation
+        raise NotImplementedError("get_ontology_framework is not implemented yet.")
+    
+    def get_ontology_hierarchies(self):
+        # hierarchies
+        raise NotImplementedError("get_ontology_hierarchies is not implemented yet.")
+    
+    def get_ontology_relationships(self):
+        raise NotImplementedError("get_ontology_relationships is not implemented yet.")
+    
+    def get_entity_metadata(self):
+        raise NotImplementedError("get_entity_metadata is not implemented yet.")
+    
+    
+    # DATA SOURCES
+    def get_datasources(self) -> dict:
+        """
+        Get the data sources from the Carbon Arc API.
+        :return: A dictionary containing the data sources.
+        """
+        url = self._routes._build_datasources_url()
+        return self._get(url)
+
+    # BUILDER
+    def get_subjects(
+        self, 
+        source:Optional[List[str]]=None,
+        entity:Optional[List[str]]=None,
+        domain:Optional[List[str]]=None,
+        representation:Optional[List[str]]=None,
+        ) -> dict:
+        raise NotImplementedError("get_subjects is not implemented yet.")
+
+    def get_topics(
+        self,
+        source:Optional[List[str]]=None,
+        subject:Optional[List[str]]=None,
+        entity:Optional[List[str]]=None,
+        domain:Optional[List[str]]=None,
+        representation:Optional[List[str]]=None,
+        ) -> dict:
+        raise NotImplementedError("get_topics is not implemented yet.")
+    
+    # HUB
+    def get_subscriptions(self) -> dict:
+        raise NotImplementedError("get_subscriptions is not implemented yet.")
+    
+    # BILLING
+    def get_wallet_balance(self) -> dict:
+        raise NotImplementedError("get_balance is not implemented yet.")
+    
+    def get_payload_price(self):
+        raise NotImplementedError("get_payload_price is not implemented yet.")
+    
+    # WORKSPACE
+    def get_workbooks(self) -> dict:
+        raise NotImplementedError("get_subscriptions is not implemented yet.")
+    
+    def get_insights(self, workbook_id:str) -> dict:
+        raise NotImplementedError("get_insights is not implemented yet.")
