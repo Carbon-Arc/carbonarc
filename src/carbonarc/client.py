@@ -245,16 +245,33 @@ class APIClient:
         )
         return self._get(url)
 
-    def get_alldata_manifest(self, data_identifier: str) -> dict:
+    def get_alldata_manifest(
+        self, data_identifier: str,
+        created_since: str = None,
+        updated_since: str = None
+    ) -> dict:
         """
         Get the manifest for a specific data identifier from the Carbon Arc API.
         :param data_identifier: The identifier of the data to retrieve manifest for.
+        :param created_since: The filter for created timestamp. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
+        :param updated_since: The filter by updated timestamp, modification_time field. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
         :return: A dictionary containing the manifest for the specified data identifier.
         """
         url = self._routes._build_alldata_manifest_url(
             data_identifier=data_identifier
         )
-        return self._get(url)
+        params = {}
+        if created_since:
+            # validate created_since format
+            if not Utils.is_valid_date(created_since):
+                raise ValueError("created_since must be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format.")
+            params["created_since"] = created_since
+        if updated_since:
+            # validate updated_since format
+            if not Utils.is_valid_date(updated_since):
+                raise ValueError("updated_since must be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format.")
+            params["updated_since"] = updated_since
+        return self._get(url, params=params)
 
     def stream_alldata(
         self,
