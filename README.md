@@ -25,6 +25,8 @@ client = APIClient(
 
 ## Examples
 
+## Working with insights apis
+
 ### Get insights data identifiers
 
 ```python
@@ -32,7 +34,7 @@ data_identifiers = client.get_insights_data_identifiers(page=1, page_size=10)
 print("Data Identifiers:")
 data_ids = data_identifiers["data"]
 for data_id in data_identifiers["data"]:
-    pprint(data_id)
+    print(data_id)
 ```
 
 ### Get metadata for a specific data identifier
@@ -41,7 +43,7 @@ for data_id in data_identifiers["data"]:
 data_identifier = data_ids[0]["data_identifier"]
 metadata = client.get_insight_metadata(data_identifier)
 print(f"Metadata for {data_identifier}:")
-pprint(metadata)
+print(metadata)
 ```
 
 ### Get filters for a specific data identifier
@@ -49,7 +51,7 @@ pprint(metadata)
 ```python
 filters = client.get_insight_filters(data_identifier)
 print(f"Filters for {data_identifier}:")
-pprint(filters)
+print(filters)
 ```
 
 ### Get filter values for a specific filter key
@@ -59,7 +61,7 @@ filter_key = filter_keys[0]["key"]
 print(f"Filter key: {filter_key}")
 filter_values = client.get_insight_filter_values(data_identifier, filter_key)
 print(f"Filter values for {filter_key} in {data_identifier}:")
-pprint(filter_values)
+print(filter_values)
 ```
 
 ### Get insights data
@@ -67,13 +69,12 @@ pprint(filter_values)
 ```python
 insights_data = client.get_insights_data(data_identifier, page=1, page_size=10)
 print(f"Insights data for {data_identifier}:")
-pprint(insights_data)
+print(insights_data)
 ```
 
 ### Get insights data as pandas DataFrame
 
 ```python
-import pandas as pd
 insights_df = client.get_insights_data_pandas(data_identifier, page=1, page_size=10)
 print(f"Insights data for {data_identifier} as DataFrame:")
 print(insights_df)
