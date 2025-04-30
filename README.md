@@ -79,23 +79,3 @@ insights_df = client.get_insights_data_pandas(data_identifier, page=1, page_size
 print(f"Insights data for {data_identifier} as DataFrame:")
 print(insights_df)
 ```
-
-## Working with alldata APIs
-
-### Get alldata identifiersq
-
-```python
-data_identifiers = client.get_alldata_data_identifiers()
-print("Data Identifiers:", data_identifiers)
-data_ids_df = pd.DataFrame(data_identifiers["data"])
-print(data_ids_df)
-```
-
-### Get manifest for a specific data identifier
-
-```python
-data_identifier = "card_us_detail_data"
-manifest = client.get_alldata_manifest(data_identifier)
-print(f"\nManifest for {data_identifier}:")
-print(manifest)
-```
