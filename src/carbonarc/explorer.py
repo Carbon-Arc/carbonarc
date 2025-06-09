@@ -1,4 +1,4 @@
-from typing import Optional, Literal, Union, List, Dict
+from typing import Optional, Literal, Union, List
 import pandas as pd
 
 import carbonarc.utils as Utils
@@ -272,7 +272,7 @@ class ExplorerAPIClient(BaseAPIClient):
             + f"/insights/{data_identifier}?page={page}&size={page_size}&type={data_type}&aggregation={aggregation}"
         )
     
-    def get_insight_data_identifiers(self, page: int = 1, page_size: int = 100) -> dict:
+    def get_insights_data_identifiers(self, page: int = 1, page_size: int = 100) -> dict:
         """
         Get the list of data identifiers from the Carbon Arc API.
         :param page: The page number to retrieve.
