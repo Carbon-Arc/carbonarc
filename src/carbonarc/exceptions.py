@@ -26,3 +26,7 @@ class ValidationError(CarbonArcException):
 class RateLimitError(CarbonArcException):
     """Raised when API rate limit is exceeded."""
     pass
+
+class InvalidConfigurationError(CarbonArcException):
+    """Raised when the configuration is invalid."""
+    pass

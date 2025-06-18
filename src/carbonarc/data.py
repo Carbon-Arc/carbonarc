@@ -2,7 +2,7 @@ import os
 from typing import Optional, Literal
 
 from carbonarc.base import BaseAPIClient
-import carbonarc.utils as Utils
+from carbonarc.utils import is_valid_date
 
 class DataAPIClient(BaseAPIClient):
     """
@@ -149,12 +149,12 @@ class DataAPIClient(BaseAPIClient):
         params = {}
         if created_since:
             # validate created_since format
-            if not Utils.is_valid_date(created_since):
+            if not is_valid_date(created_since):
                 raise ValueError("created_since must be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format.")
             params["created_since"] = created_since
         if updated_since:
             # validate updated_since format
-            if not Utils.is_valid_date(updated_since):
+            if not is_valid_date(updated_since):
                 raise ValueError("updated_since must be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format.")
             params["updated_since"] = updated_since
         return self._get(url, params=params)

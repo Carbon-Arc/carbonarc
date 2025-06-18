@@ -12,10 +12,12 @@ class PlatformAPIClient(BaseAPIClient):
         version: str = "v2"
         ):
         """
-        Initialize PlatformAPIClient with an authentication token and user agent.
-        :param auth_token: The authentication token to be used for requests.
-        :param host: The base URL of the Carbon Arc API.
-        :param version: The API version to use.
+        Initialize PlatformAPIClient.
+
+        Args:
+            token: Authentication token for requests.
+            host: Base URL of the Carbon Arc API.
+            version: API version to use.
         """
         super().__init__(token=token, host=host, version=version)
         
@@ -25,7 +27,21 @@ class PlatformAPIClient(BaseAPIClient):
         raise NotImplementedError("get_balance is not implemented yet.")
     
     def get_order_history(self) -> dict:
-        raise NotImplementedError("get_order_history is not implemented yet.")
+        """
+        Retrieve order history.
+
+        Returns:
+            Dictionary of order history.
+        """
+        url = f"{self.base_platform_url}/orders"
+        return self._get(url)
     
-    def get_workbooks(self) -> dict:
-        raise NotImplementedError("get_subscriptions is not implemented yet.")
+    def get_order_details(self, order_id: str) -> dict:
+        """
+        Retrieve details for a specific order.
+
+        Returns:
+            Dictionary of order details.
+        """
+        url = f"{self.base_platform_url}/orders/{order_id}"
+        return self._get(url)
