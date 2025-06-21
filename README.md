@@ -16,9 +16,9 @@ $ pip install git+https://github.com/Carbon-Arc/carbonarc.git
 Initialize the API client with authentication.
 
 ```python
-from carbonarc import APIClient
+from carbonarc import CarbonArcClient
 
-client = APIClient(
+client = CarbonArcClient(
     token="<token>", # optional; set env var API_AUTH_TOKEN
 )
 ```

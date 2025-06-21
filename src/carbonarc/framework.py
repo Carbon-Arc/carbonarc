@@ -1,12 +1,12 @@
 import pandas as pd
 from typing import Optional, Literal, Union, List, Dict, Any
 
-from carbonarc.utils import timeseries_response_to_pandas
-from carbonarc.base import BaseAPIClient
-from carbonarc.exceptions import InvalidConfigurationError
+from carbonarc.base.utils import timeseries_response_to_pandas
+from carbonarc.base.client import BaseAPIClient
+from carbonarc.base.exceptions import InvalidConfigurationError
 
 
-class BuilderAPIClient(BaseAPIClient):
+class FrameworkAPIClient(BaseAPIClient):
     """Client for interacting with the Carbon Arc Builder API."""
 
     def __init__(
@@ -24,7 +24,7 @@ class BuilderAPIClient(BaseAPIClient):
             version: API version to use.
         """
         super().__init__(token=token, host=host, version=version)
-        self.base_builder_url = self._build_base_url("builder")
+        self.base_framework_url = self._build_base_url("framework")
 
     @staticmethod
     def build_framework(
@@ -92,7 +92,7 @@ class BuilderAPIClient(BaseAPIClient):
             Dictionary of available filters.
         """
         self._validate_framework(framework)
-        url = f"{self.base_builder_url}/framework/filters"
+        url = f"{self.base_framework_url}/filters"
         return self._post(url, json=framework)
 
     def find_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
@@ -107,7 +107,7 @@ class BuilderAPIClient(BaseAPIClient):
             Dictionary of filter options.
         """
         self._validate_framework(framework)
-        url = f"{self.base_builder_url}/framework/filters/{filter_key}/options"
+        url = f"{self.base_framework_url}/filters/{filter_key}/options"
         return self._post(url, json=framework)
 
     def collect_framework_information(self, framework: dict) -> dict:
@@ -121,7 +121,7 @@ class BuilderAPIClient(BaseAPIClient):
             Dictionary of framework metadata.
         """
         self._validate_framework(framework)
-        url = f"{self.base_builder_url}/framework/metadata"
+        url = f"{self.base_framework_url}/metadata"
         return self._post(url, json=framework)
 
     def buy_frameworks(self, order: List[dict]) -> dict:
@@ -136,7 +136,7 @@ class BuilderAPIClient(BaseAPIClient):
         """
         for framework in order:
             self._validate_framework(framework)
-        url = f"{self.base_builder_url}/framework/buy"
+        url = f"{self.base_framework_url}/buy"
         return self._post(url, json=order)
 
     def get_framework_data(
@@ -159,7 +159,7 @@ class BuilderAPIClient(BaseAPIClient):
             Data as a DataFrame, dictionary, or timeseries, depending on data_type.
         """
         endpoint = f"/framework/{framework_id}/data"
-        url = f"{self.base_builder_url}/{endpoint}?page={page}&size={page_size}"
+        url = f"{self.base_framework_url}/{endpoint}?page={page}&size={page_size}"
         if data_type:
             url += f"&type={data_type}"
         if data_type == "dataframe":
@@ -217,6 +217,6 @@ class BuilderAPIClient(BaseAPIClient):
             Dictionary of framework metadata.
         """
         endpoint = f"/framework/{framework_id}/metadata"
-        url = f"{self.base_builder_url}/{endpoint}"
+        url = f"{self.base_framework_url}/{endpoint}"
         return self._get(url)
     

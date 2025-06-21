@@ -1,4 +1,4 @@
-from carbonarc.base import BaseAPIClient
+from carbonarc.base.client import BaseAPIClient
 
 class PlatformAPIClient(BaseAPIClient):
     """

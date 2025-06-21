@@ -1,8 +1,8 @@
 import logging
 from typing import Literal
 
-from carbonarc.auth import TokenAuth
-from carbonarc.manager import HttpRequestManager
+from carbonarc.base.auth import TokenAuth
+from carbonarc.base.manager import HttpRequestManager
 
 
 class BaseAPIClient:
@@ -33,7 +33,7 @@ class BaseAPIClient:
 
     def _build_base_url(
         self,
-        product: Literal["platform", "builder", "data", "ontology", "hub"],
+        product: Literal["platform", "framework", "library", "ontology", "hub"],
     ) -> str:
         return self.host + f"/api/{self.version}/" + product
     

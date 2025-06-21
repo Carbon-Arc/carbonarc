@@ -1,6 +1,6 @@
 from typing import Optional, List, Literal, Dict, Any, Union
 
-from carbonarc.base import BaseAPIClient
+from carbonarc.base.client import BaseAPIClient
 
 class OntologyAPIClient(BaseAPIClient):
     """
