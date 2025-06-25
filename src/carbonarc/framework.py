@@ -158,7 +158,7 @@ class FrameworkAPIClient(BaseAPIClient):
         Returns:
             Data as a DataFrame, dictionary, or timeseries, depending on data_type.
         """
-        endpoint = f"/framework/{framework_id}/data"
+        endpoint = f"{framework_id}/data"
         url = f"{self.base_framework_url}/{endpoint}?page={page}&size={page_size}"
         if data_type:
             url += f"&type={data_type}"
