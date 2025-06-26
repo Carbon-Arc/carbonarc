@@ -33,7 +33,7 @@ class BaseAPIClient:
 
     def _build_base_url(
         self,
-        product: Literal["platform", "framework", "library", "ontology", "hub"],
+        product: Literal["clients", "framework", "library", "ontology", "hub"],
     ) -> str:
         return self.host + f"/api/{self.version}/" + product
     

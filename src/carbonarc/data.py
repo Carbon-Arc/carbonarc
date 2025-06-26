@@ -98,22 +98,36 @@ class DataAPIClient(BaseAPIClient):
 
         return self._post(url, json=order)
     
-    def get_graphs(
-        self,
-    ) -> dict:
+    def get_order_details(self, order_id: str) -> dict:
         """
-        Get the list of graphs from the Carbon Arc API.
-        
+        Get the details of an order from the Carbon Arc API.
+
+        Args:
+            order_id (str): The ID of the order to get details for.
+
         Returns:
-            dict: A dictionary containing the list of graphs.
+            dict: A dictionary containing the details of the order.
         """
-        url = f"{self.base_data_url}/graph"
+        endpoint = f"data/order/{order_id}"
+        url = f"{self.base_data_url}/{endpoint}"
 
         return self._get(url)
+    
+    def download_file(self, file_id: str) -> dict:
+        """
+        Download a data file from the Carbon Arc API.
 
-    def get_graph_data(self, data_identifier: str) -> dict:
-        raise NotImplementedError("get_graph_data is not implemented yet.")
+        Args:
+            file_id (str): The ID of the file to download.
 
+        Returns:
+            dict: A dictionary containing the file.
+        """
+        endpoint = f"data/files/{file_id}"
+        url = f"{self.base_data_url}/{endpoint}"
+
+        return self._get(url)
+    
     def __stream_data(
         self,
         url: str,
@@ -515,3 +529,9 @@ class DataAPIClient(BaseAPIClient):
         except Exception as e:
             log.error(f"Google Cloud Storage upload failed due to: {str(e)}")
             raise
+
+    def get_graphs(self) -> dict:
+        raise NotImplementedError("get_graphs is not implemented yet.")
+
+    def get_graph_data(self, data_identifier: str) -> dict:
+        raise NotImplementedError("get_graph_data is not implemented yet.")

@@ -1,5 +1,5 @@
 from carbonarc.data import DataAPIClient
-from carbonarc.framework import FrameworkAPIClient
+from carbonarc.explorer import ExplorerAPIClient
 from carbonarc.hub import HubAPIClient
 from carbonarc.platform import PlatformAPIClient
 from carbonarc.ontology import OntologyAPIClient
@@ -25,7 +25,7 @@ class CarbonArcClient:
             version (str): The API version to use.
         """
         self.data = DataAPIClient(token=token, host=host, version=version)
-        self.builder = FrameworkAPIClient(token=token, host=host, version=version)
+        self.explorer = ExplorerAPIClient(token=token, host=host, version=version)
         self.hub = HubAPIClient(token=token, host=host, version=version)
         self.platform = PlatformAPIClient(token=token, host=host, version=version)
         self.ontology = OntologyAPIClient(token=token, host=host, version=version)

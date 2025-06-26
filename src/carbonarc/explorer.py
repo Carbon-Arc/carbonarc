@@ -6,7 +6,7 @@ from carbonarc.base.client import BaseAPIClient
 from carbonarc.base.exceptions import InvalidConfigurationError
 
 
-class FrameworkAPIClient(BaseAPIClient):
+class ExplorerAPIClient(BaseAPIClient):
     """Client for interacting with the Carbon Arc Builder API."""
 
     def __init__(
@@ -81,7 +81,7 @@ class FrameworkAPIClient(BaseAPIClient):
         if "insight_id" not in framework["insight"]:
             raise InvalidConfigurationError("Insight must have an 'insight_id' key.")
 
-    def find_framework_filters(self, framework: dict) -> dict:
+    def collect_framework_filters(self, framework: dict) -> dict:
         """
         Retrieve available filters for a framework.
 
@@ -95,7 +95,7 @@ class FrameworkAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/filters"
         return self._post(url, json=framework)
 
-    def find_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
+    def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
         """
         Retrieve options for a specific filter in a framework.
 
@@ -110,6 +110,7 @@ class FrameworkAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/filters/{filter_key}/options"
         return self._post(url, json=framework)
 
+    
     def collect_framework_information(self, framework: dict) -> dict:
         """
         Retrieve metadata for a framework.
@@ -169,7 +170,7 @@ class FrameworkAPIClient(BaseAPIClient):
         else:
             return self._get(url)
 
-    def get_framework_all_data(
+    def stream_framework_data(
         self,
         framework_id: str,
         page_size: int = 100,
@@ -216,7 +217,7 @@ class FrameworkAPIClient(BaseAPIClient):
         Returns:
             Dictionary of framework metadata.
         """
-        endpoint = f"/framework/{framework_id}/metadata"
+        endpoint = f"{framework_id}/metadata"
         url = f"{self.base_framework_url}/{endpoint}"
         return self._get(url)
     

@@ -12,13 +12,10 @@ def timeseries_response_to_pandas(response: Union[dict, pd.DataFrame]) -> pd.Dat
         response["date"] = pd.to_datetime(response["date"])
         return response
     elif isinstance(response, dict):
-        dfs = []
         current_page_data = response["data"]
-        for data in current_page_data:
-            df = pd.DataFrame(data['data'])
-            df["date"] = pd.to_datetime(df["date"])
-            dfs.append(df)
-        return pd.concat(dfs)
+        df = pd.DataFrame(current_page_data)
+        df["date"] = pd.to_datetime(df["date"])
+        return df
     else:
         raise ValueError("Response must be a dictionary or a pandas DataFrame")
 
