@@ -21,6 +21,14 @@ class DataAPIClient(BaseAPIClient):
         host: str = "https://platform.carbonarc.co",
         version: str = "v2",
     ):
+        """
+        Initialize DataAPIClient with an authentication token and user agent.
+        
+        Args:
+            token: The authentication token to be used for requests.
+            host: The base URL of the Carbon Arc API.
+            version: The API version to use.
+        """
         super().__init__(token=token, host=host, version=version)
 
         self.base_data_url = self._build_base_url("library")

@@ -17,7 +17,7 @@ class CarbonArcClient:
         version: str = "v2",
     ):
         """
-        Initialize APIClient with an authentication token and user agent.
+        Initialize CarbonArcClient with an authentication token and user agent.
         
         Args:
             token (str): The authentication token to be used for requests.

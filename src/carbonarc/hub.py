@@ -13,9 +13,11 @@ class HubAPIClient(BaseAPIClient):
         ):
         """
         Initialize HubAPIClient with an authentication token and user agent.
-        :param auth_token: The authentication token to be used for requests.
-        :param host: The base URL of the Carbon Arc API.
-        :param version: The API version to use.
+        
+        Args:
+            token: The authentication token to be used for requests.
+            host: The base URL of the Carbon Arc API.
+            version: The API version to use.
         """
         super().__init__(token=token, host=host, version=version)
         

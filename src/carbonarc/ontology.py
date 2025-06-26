@@ -15,9 +15,11 @@ class OntologyAPIClient(BaseAPIClient):
         ):
         """
         Initialize OntologyAPIClient with an authentication token and user agent.
-        :param auth_token: The authentication token to be used for requests.
-        :param host: The base URL of the Carbon Arc API.
-        :param version: The API version to use.
+        
+        Args:
+            token: The authentication token to be used for requests.
+            host: The base URL of the Carbon Arc API.
+            version: The API version to use.
         """
         super().__init__(token=token, host=host, version=version)
         
@@ -212,4 +214,11 @@ class OntologyAPIClient(BaseAPIClient):
         Retrieve the current ontology version.
         """
         url = f"{self.base_ontology_url}/ontology-versions"
+        return self._get(url)
+    
+    def get_ontology_tree(self) -> dict:
+        """
+        Retrieve the ontology tree.
+        """
+        url = f"{self.base_ontology_url}/ontology-tree"
         return self._get(url)
