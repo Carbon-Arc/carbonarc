@@ -18,9 +18,11 @@ class CarbonArcClient:
     ):
         """
         Initialize APIClient with an authentication token and user agent.
-        :param auth_token: The authentication token to be used for requests.
-        :param host: The base URL of the Carbon Arc API.
-        :param version: The API version to use.
+        
+        Args:
+            token (str): The authentication token to be used for requests.
+            host (str): The base URL of the Carbon Arc API.
+            version (str): The API version to use.
         """
         self.data = DataAPIClient(token=token, host=host, version=version)
         self.builder = FrameworkAPIClient(token=token, host=host, version=version)

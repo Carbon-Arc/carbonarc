@@ -35,27 +35,19 @@ class DataAPIClient(BaseAPIClient):
     def get_dataset_information(self, data_identifier: str) -> dict:
         """
         Get the information for a specific dataset from the Carbon Arc API.
-        :param data_identifier: The identifier of the dataset to retrieve information for.
-        :return: A dictionary containing the information for the specified dataset.
+        
+        Args:
+            data_identifier (str): The identifier of the data to retrieve information for.
+            
+        Returns:
+            dict: A dictionary containing the information for the specified dataset.
         """
         endpoint = f"data/{data_identifier}/information"
         url = f"{self.base_data_url}/{endpoint}"
 
         return self._get(url)
 
-    def get_graph_data_identifiers(self) -> dict:
-        """
-        Get the list of graph data identifiers from the Carbon Arc API.
-        :return: A dictionary containing the list of graph data identifiers.
-        """
-        endpoint = "graphdata/data-identifiers"
-        url = f"{self.base_data_url}/{endpoint}"
-        return self._get(url)
-
-    def get_graph_data(self, data_identifier: str) -> dict:
-        raise NotImplementedError("get_graph_data is not implemented yet.")
-
-    def get_bulk_data_manifest(
+    def get_data_manifest(
         self,
         data_identifier: str,
         created_since: Optional[str] = None,
@@ -63,12 +55,16 @@ class DataAPIClient(BaseAPIClient):
     ) -> dict:
         """
         Get the manifest for a specific data identifier from the Carbon Arc API.
-        :param data_identifier: The identifier of the data to retrieve manifest for.
-        :param created_since: The filter for created timestamp. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
-        :param updated_since: The filter by updated timestamp, modification_time field. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
-        :return: A dictionary containing the manifest for the specified data identifier.
+        
+        Args:
+            data_identifier (str): The identifier of the data to retrieve manifest for.
+            created_since (Optional[str]): The filter for created timestamp. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
+            updated_since (Optional[str]): The filter by updated timestamp, modification_time field. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
+            
+        Returns:
+            dict: A dictionary containing the manifest for the specified data identifier.
         """
-        endpoint = f"{data_identifier}/manifest"
+        endpoint = f"data/{data_identifier}/manifest"
         url = f"{self.base_data_url}/{endpoint}"
         params = {}
         if created_since:
@@ -86,30 +82,70 @@ class DataAPIClient(BaseAPIClient):
                 )
             params["updated_since"] = updated_since
         return self._get(url, params=params)
+    
+    def buy_data(self, order: dict) -> dict:
+        """
+        Buy data from the Carbon Arc API.
+        
+        Args:
+            order (dict): The order to buy data for.
+            
+        Returns:
+            dict: A dictionary containing the information for the specified order.
+        """
+        endpoint = "data/buy"
+        url = f"{self.base_data_url}/{endpoint}"
 
-    def stream_bulk_data(
+        return self._post(url, json=order)
+    
+    def get_graphs(
+        self,
+    ) -> dict:
+        """
+        Get the list of graphs from the Carbon Arc API.
+        
+        Returns:
+            dict: A dictionary containing the list of graphs.
+        """
+        url = f"{self.base_data_url}/graph"
+
+        return self._get(url)
+
+    def get_graph_data(self, data_identifier: str) -> dict:
+        raise NotImplementedError("get_graph_data is not implemented yet.")
+
+    def __stream_data(
         self,
         url: str,
         chunk_size: int = 1024 * 1024 * 250,  # 250MB
     ):
         """
         Download a file stream from the Carbon Arc API.
-        :param url: The URL of the file to download.
-        :param chunk_size: The size of each chunk to download.
-        :return: A generator yielding the raw stream of the file.
+        
+        Args:
+            url (str): The URL of the file to download.
+            chunk_size (int): The size of each chunk to download.
+            
+        Returns:
+            generator: A generator yielding the raw stream of the file.
         """
         response = self.request_manager.get_stream(url)
         for chunk in response.iter_content(chunk_size=chunk_size):
             yield chunk
 
-    def download_bulk_data_to_file(
+    def download_data_to_file(
         self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250
     ):
         """
         Download data for a specific data identifier and save it to a file.
-        :param url: The URL of the file to download.
-        :param output_file: The path to the file where the data should be saved.
-        :param chunk_size: The size of each chunk to download.
+        
+        Args:
+            url (str): The URL of the file to download.
+            output_file (str): The path to the file where the data should be saved.
+            chunk_size (int): The size of each chunk to download.
+            
+        Returns:
+            str: The path to the downloaded file.
         """
         # check if output_file directory exists
         output_dir = os.path.dirname(output_file)
@@ -117,10 +153,10 @@ class DataAPIClient(BaseAPIClient):
             raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
 
         with open(output_file, "wb") as f:
-            for chunk in self.stream_bulk_data(url, chunk_size):
+            for chunk in self.__stream_data(url, chunk_size):
                 f.write(chunk)
 
-    def download_bulk_data_to_s3(
+    def download_data_to_s3(
         self,
         s3_client,
         file_url: str,
@@ -254,7 +290,7 @@ class DataAPIClient(BaseAPIClient):
             log.error(f"Multipart upload aborted due to: {str(e)}")
             raise
 
-    def download_bulk_data_to_azure(
+    def download_data_to_azure(
         self,
         blob_service_client,
         file_url: str,
@@ -372,7 +408,7 @@ class DataAPIClient(BaseAPIClient):
             log.error(f"Azure blob upload failed due to: {str(e)}")
             raise
 
-    def download_bulk_data_to_gcp(
+    def download_data_to_gcp(
         self,
         storage_client,
         file_url: str,
