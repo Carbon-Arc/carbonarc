@@ -31,7 +31,7 @@ class ExplorerAPIClient(BaseAPIClient):
         entities: List[Dict],
         insight: int,
         filters: Dict[str, Any],
-        aggregate: Optional[Literal["sum", "mean"]] = "sum"
+        aggregate: Optional[Literal["sum", "mean"]] = None
     ) -> dict:
         """
         Build a framework payload for the API.
@@ -122,7 +122,21 @@ class ExplorerAPIClient(BaseAPIClient):
             Dictionary of framework metadata.
         """
         self._validate_framework(framework)
-        url = f"{self.base_framework_url}/metadata"
+        url = f"{self.base_framework_url}/information"
+        return self._post(url, json=framework)
+    
+    def order_framework(self, framework: dict) -> dict:
+        """
+        Order a framework.
+
+        Args:
+            framework: Framework dictionary.
+
+        Returns:
+            Dictionary of framework metadata.
+        """
+        self._validate_framework(framework)
+        url = f"{self.base_framework_url}/order"
         return self._post(url, json=framework)
 
     def buy_frameworks(self, order: List[dict]) -> dict:
