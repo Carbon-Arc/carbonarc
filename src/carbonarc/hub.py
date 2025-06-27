@@ -22,10 +22,24 @@ class HubAPIClient(BaseAPIClient):
         super().__init__(token=token, host=host, version=version)
         
         self.base_hub_url = self._build_base_url("hub")
-
-    def get_subscriptions(self) -> dict:
-        """return dashboard subscriptions"""
-        raise NotImplementedError("get_subscriptions is not implemented yet.")
     
-    def get_webcontent_data(self) -> dict:
-        raise NotImplementedError("get_webcontent_data is not implemented yet.")
+    def get_webcontent_feeds(self) -> dict:
+        """
+        Retrieve all webcontent feeds.
+        """
+        url = f"{self.base_hub_url}/webcontent"
+        return self._get(url)
+    
+    def get_subscribed_feeds(self) -> dict:
+        """
+        Retrieve all subscribed webcontent feeds.
+        """
+        url = f"{self.base_hub_url}/webcontent/subscribed"
+        return self._get(url)
+    
+    def get_webcontent_data(self, webcontent_name: str, page: int = 1, size: int = 100) -> dict:
+        """
+        Retrieve a webcontent feed by name.
+        """
+        url = f"{self.base_hub_url}/webcontent/{webcontent_name}?page={page}&size={size}"
+        return self._get(url)
