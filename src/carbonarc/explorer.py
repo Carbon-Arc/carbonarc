@@ -124,20 +124,6 @@ class ExplorerAPIClient(BaseAPIClient):
         self._validate_framework(framework)
         url = f"{self.base_framework_url}/information"
         return self._post(url, json=framework)
-    
-    def order_framework(self, framework: dict) -> dict:
-        """
-        Order a framework.
-
-        Args:
-            framework: Framework dictionary.
-
-        Returns:
-            Dictionary of framework metadata.
-        """
-        self._validate_framework(framework)
-        url = f"{self.base_framework_url}/order"
-        return self._post(url, json=framework)
 
     def buy_frameworks(self, order: List[dict]) -> dict:
         """

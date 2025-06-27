@@ -25,11 +25,24 @@ class OntologyAPIClient(BaseAPIClient):
         
         self.base_ontology_url = self._build_base_url("ontology")
     
+    def get_entity_map(self) -> dict:
+        """
+        Retrieve the entity map.
+        """
+        url = f"{self.base_ontology_url}/entity-map"
+        return self._get(url)
+    
+    def get_insight_map(self) -> dict:
+        """
+        Retrieve the insight map.
+        """
+        url = f"{self.base_ontology_url}/insight-map"
+        return self._get(url)
 
     def get_entities(
         self,
-        entity_representation: Optional[List[str]] = None,
-        entity_domain: Optional[Union[str, List[str]]] = None,
+        representation: Optional[List[str]] = None,
+        domain: Optional[Union[str, List[str]]] = None,
         entity: Optional[List[Literal["brand", "company", "people", "location"]]] = None,
         subject_ids: Optional[List[int]] = None,
         topic_ids: Optional[List[int]] = None,
@@ -74,10 +87,10 @@ class OntologyAPIClient(BaseAPIClient):
             params["insight_types"] = insight_types
         if insight_id:
             params["insight_id"] = insight_id
-        if entity_representation:
-            params["entity_representation"] = entity_representation
-        if entity_domain:
-            params["entity_domain"] = entity_domain
+        if representation:
+            params["entity_representation"] = representation
+        if domain:
+            params["entity_domain"] = domain
         if entity:
             params["entity"] = entity
         if version:
@@ -85,7 +98,7 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/entities"
         return self._get(url, params=params)
 
-    def get_entity_information(self, entity_id: int) -> dict:
+    def get_entity_information(self, entity_id: int, representation: str) -> dict:
         """
         Retrieve information for a specific entity.
 
@@ -95,8 +108,9 @@ class OntologyAPIClient(BaseAPIClient):
         Returns:
             Dictionary with entity information.
         """
+        params = {"entity_representation": representation}
         url = f"{self.base_ontology_url}/entities/{entity_id}"
-        return self._get(url)
+        return self._get(url, params=params)
 
     def get_insights(
         self,
