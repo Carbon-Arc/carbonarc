@@ -17,14 +17,12 @@ Initialize the API client with authentication.
 ```python
 from carbonarc import CarbonArcClient
 
-client = CarbonArcClient(
-    token="<token>"
-)
+client = CarbonArcClient(token="<token>") # retrieve token from account
 ```
 
 ## Resources
 
-- [Carbon Arc Tutorials](https://github.com/Carbon-Arc/carbonarc-tutorials)
-- [Documentation](https://docs.carbonarc.co)
-- [Web App](https://app.carbonarc.co)
-- [API](https://api.carbonarc.co)
+- [Tutorials](https://github.com/Carbon-Arc/carbonarc-tutorials)
+- [Docs](https://docs.carbonarc.co/)
+- [App](https://app.carbonarc.co/)
+- [API](https://api.carbonarc.co/)
