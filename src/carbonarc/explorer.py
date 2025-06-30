@@ -93,7 +93,7 @@ class ExplorerAPIClient(BaseAPIClient):
         """
         self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters"
-        return self._post(url, json=framework)
+        return self._post(url, json={"framework": framework})
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
         """
@@ -108,7 +108,7 @@ class ExplorerAPIClient(BaseAPIClient):
         """
         self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters/{filter_key}/options"
-        return self._post(url, json=framework)
+        return self._post(url, json={"framework": framework})
 
     
     def collect_framework_information(self, framework: dict) -> dict:
@@ -123,7 +123,7 @@ class ExplorerAPIClient(BaseAPIClient):
         """
         self._validate_framework(framework)
         url = f"{self.base_framework_url}/information"
-        return self._post(url, json=framework)
+        return self._post(url, json={"framework": framework})
 
     def buy_frameworks(self, order: List[dict]) -> dict:
         """
@@ -138,7 +138,7 @@ class ExplorerAPIClient(BaseAPIClient):
         for framework in order:
             self._validate_framework(framework)
         url = f"{self.base_framework_url}/buy"
-        return self._post(url, json=order)
+        return self._post(url, json={"order": {"frameworks": order}})
 
     def get_framework_data(
         self,
