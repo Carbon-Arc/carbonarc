@@ -147,7 +147,7 @@ class ExplorerAPIClient(BaseAPIClient):
         endpoint = f"{framework_id}/data"
         url = f"{self.base_framework_url}/{endpoint}?page={page}&size={page_size}"
         if data_type:
-            url += f"&type={data_type}"
+            url += f"&data_type={data_type}"
         if data_type == "dataframe":
             return pd.DataFrame(self._get(url).get("data", {}))
         elif data_type == "timeseries":
