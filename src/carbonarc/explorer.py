@@ -94,6 +94,25 @@ class ExplorerAPIClient(BaseAPIClient):
         self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters"
         return self._post(url, json={"framework": framework})
+    
+    def check_framework_price(self, framework: dict) -> dict:
+        """
+        Check the price of a framework.
+
+        Args:
+            framework: Framework dictionary.
+
+        Returns:
+            Dictionary of available filters.
+        """
+        self._validate_framework(framework)
+        url = f"{self.base_framework_url}/order"
+        price = self._post(url, json={"framework": framework}).get("price", None)
+        
+        if not price:
+            raise InvalidConfigurationError("Framework price is not available.")
+        
+        return price
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
         """
