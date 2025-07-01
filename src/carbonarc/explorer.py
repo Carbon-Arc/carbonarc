@@ -12,7 +12,7 @@ class ExplorerAPIClient(BaseAPIClient):
     def __init__(
         self,
         token: str,
-        host: str = "https://platform.carbonarc.co",
+        host: str = "https://api.carbonarc.co",
         version: str = "v2"
     ):
         """
@@ -108,21 +108,6 @@ class ExplorerAPIClient(BaseAPIClient):
         """
         self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters/{filter_key}/options"
-        return self._post(url, json={"framework": framework})
-
-    
-    def collect_framework_information(self, framework: dict) -> dict:
-        """
-        Retrieve metadata for a framework.
-
-        Args:
-            framework: Framework dictionary.
-
-        Returns:
-            Dictionary of framework metadata.
-        """
-        self._validate_framework(framework)
-        url = f"{self.base_framework_url}/information"
         return self._post(url, json={"framework": framework})
 
     def buy_frameworks(self, order: List[dict]) -> dict:

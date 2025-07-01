@@ -13,7 +13,7 @@ class CarbonArcClient:
     def __init__(
         self,
         token: str,
-        host: str = "https://platform.carbonarc.co",
+        host: str = "https://api.carbonarc.co",
         version: str = "v2",
     ):
         """
