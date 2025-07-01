@@ -13,7 +13,7 @@ class BaseAPIClient:
     def __init__(
         self, 
         token: str,
-        host: str = "https://platform.carbonarc.co",
+        host: str = "https://api.carbonarc.co",
         version: str = "v2"
         ):
         """
@@ -35,7 +35,12 @@ class BaseAPIClient:
         self,
         product: Literal["clients", "framework", "library", "ontology", "hub"],
     ) -> str:
-        return self.host + f"/api/{self.version}/" + product
+        
+        url = self.host + f"/{self.version}/" + product
+        
+        url = url.replace("//", "/")
+        
+        return url
     
     def _get(self, url: str, **kwargs) -> dict:
         return self.request_manager.get(url, **kwargs).json()
