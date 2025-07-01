@@ -36,9 +36,7 @@ class BaseAPIClient:
         product: Literal["clients", "framework", "library", "ontology", "hub"],
     ) -> str:
         
-        url = self.host + f"/{self.version}/" + product
-        
-        url = url.replace("//", "/")
+        url = f"{self.host.rstrip('/')}/{self.version}/{product}"
         
         return url
     
