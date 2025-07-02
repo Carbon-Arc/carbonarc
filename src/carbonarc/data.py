@@ -40,7 +40,7 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url)
 
-    def get_dataset_information(self, data_identifier: str) -> dict:
+    def get_dataset_information(self, dataset_id: str) -> dict:
         """
         Get the information for a specific dataset from the Carbon Arc API.
         
@@ -50,14 +50,14 @@ class DataAPIClient(BaseAPIClient):
         Returns:
             dict: A dictionary containing the information for the specified dataset.
         """
-        endpoint = f"data/{data_identifier}/information"
+        endpoint = f"data/{dataset_id}/information"
         url = f"{self.base_data_url}/{endpoint}"
 
         return self._get(url)
 
     def get_data_manifest(
         self,
-        data_identifier: str,
+        dataset_id: str,
         created_since: Optional[str] = None,
         updated_since: Optional[str] = None,
     ) -> dict:
@@ -65,14 +65,14 @@ class DataAPIClient(BaseAPIClient):
         Get the manifest for a specific data identifier from the Carbon Arc API.
         
         Args:
-            data_identifier (str): The identifier of the data to retrieve manifest for.
+            dataset_id (str): The identifier of the data to retrieve manifest for.
             created_since (Optional[str]): The filter for created timestamp. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
             updated_since (Optional[str]): The filter by updated timestamp, modification_time field. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
             
         Returns:
             dict: A dictionary containing the manifest for the specified data identifier.
         """
-        endpoint = f"data/{data_identifier}/manifest"
+        endpoint = f"data/{dataset_id}/manifest"
         url = f"{self.base_data_url}/{endpoint}"
         params = {}
         if created_since:
