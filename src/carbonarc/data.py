@@ -113,7 +113,7 @@ class DataAPIClient(BaseAPIClient):
             params["updated_since"] = updated_since
         return self._get(url, params=params)
     
-    def buy_data(self, order: dict) -> dict:
+    def buy_data(self, dataset_id: str, file_urls: list[str]) -> dict:
         """
         Buy data from the Carbon Arc API.
         
@@ -126,7 +126,7 @@ class DataAPIClient(BaseAPIClient):
         endpoint = "data/buy"
         url = f"{self.base_data_url}/{endpoint}"
 
-        return self._post(url, json=order)
+        return self._post(url, json={"order": {"dataset_id": dataset_id, "file_urls": file_urls}})
     
     def get_order_details(self, order_id: str) -> dict:
         """
@@ -143,7 +143,7 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url)
     
-    def download_file(self, file_id: str) -> dict:
+    def download_file(self, file_id: str, directory: str = "./"):
         """
         Download a data file from the Carbon Arc API.
 
@@ -153,52 +153,14 @@ class DataAPIClient(BaseAPIClient):
         Returns:
             dict: A dictionary containing the file.
         """
+        # get full path of directory
+        output_dir = os.path.abspath(directory)
+        
+        file_id = file_id.split("/")[-1]
         endpoint = f"data/files/{file_id}"
-        url = f"{self.base_data_url}/{endpoint}"
+        url = f"{self.base_data_url}/{endpoint}?directory={output_dir}"
 
-        return self._get(url)
-    
-    def __stream_data(
-        self,
-        url: str,
-        chunk_size: int = 1024 * 1024 * 250,  # 250MB
-    ):
-        """
-        Download a file stream from the Carbon Arc API.
-        
-        Args:
-            url (str): The URL of the file to download.
-            chunk_size (int): The size of each chunk to download.
-            
-        Returns:
-            generator: A generator yielding the raw stream of the file.
-        """
-        response = self.request_manager.get_stream(url)
-        for chunk in response.iter_content(chunk_size=chunk_size):
-            yield chunk
-
-    def download_data_to_file(
-        self, url: str, output_file: str, chunk_size: int = 1024 * 1024 * 250
-    ):
-        """
-        Download data for a specific data identifier and save it to a file.
-        
-        Args:
-            url (str): The URL of the file to download.
-            output_file (str): The path to the file where the data should be saved.
-            chunk_size (int): The size of each chunk to download.
-            
-        Returns:
-            str: The path to the downloaded file.
-        """
-        # check if output_file directory exists
-        output_dir = os.path.dirname(output_file)
-        if not os.path.exists(output_dir):
-            raise FileNotFoundError(f"Output directory {output_dir} does not exist.")
-
-        with open(output_file, "wb") as f:
-            for chunk in self.__stream_data(url, chunk_size):
-                f.write(chunk)
+        return self._stream(url)
 
     def download_data_to_s3(
         self,
