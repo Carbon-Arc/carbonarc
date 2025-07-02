@@ -50,7 +50,29 @@ class DataAPIClient(BaseAPIClient):
         Returns:
             dict: A dictionary containing the information for the specified dataset.
         """
-        endpoint = f"data/{dataset_id}/information"
+        endpoint = f"data/{dataset_id}"
+        url = f"{self.base_data_url}/{endpoint}"
+
+        return self._get(url)
+    
+    def get_graphs(
+        self,
+    ) -> dict:
+        url = f"{self.base_data_url}/graph"
+
+        return self._get(url)
+
+    def get_graph_information(self, graph_id: str) -> dict:
+        """
+        Get the information for a specific dataset from the Carbon Arc API.
+        
+        Args:
+            data_identifier (str): The identifier of the data to retrieve information for.
+            
+        Returns:
+            dict: A dictionary containing the information for the specified dataset.
+        """
+        endpoint = f"graph/{graph_id}"
         url = f"{self.base_data_url}/{endpoint}"
 
         return self._get(url)
@@ -537,9 +559,3 @@ class DataAPIClient(BaseAPIClient):
         except Exception as e:
             log.error(f"Google Cloud Storage upload failed due to: {str(e)}")
             raise
-
-    def get_graphs(self) -> dict:
-        raise NotImplementedError("get_graphs is not implemented yet.")
-
-    def get_graph_data(self, data_identifier: str) -> dict:
-        raise NotImplementedError("get_graph_data is not implemented yet.")
