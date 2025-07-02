@@ -143,7 +143,7 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url)
     
-    def download_file(self, file_id: str, directory: str = "./"):
+    def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024):
         """
         Download a data file from the Carbon Arc API.
 
@@ -158,7 +158,7 @@ class DataAPIClient(BaseAPIClient):
         
         file_id = file_id.split("/")[-1]
         endpoint = f"data/files/{file_id}"
-        url = f"{self.base_data_url}/{endpoint}?directory={output_dir}"
+        url = f"{self.base_data_url}/{endpoint}?directory={output_dir}&chunk_size={chunk_size}"
 
         return self._stream(url)
 
