@@ -45,3 +45,6 @@ class BaseAPIClient:
 
     def _post(self, url: str, **kwargs) -> dict:
         return self.request_manager.post(url, **kwargs).json()
+
+    def _stream(self, url: str, **kwargs):
+        return self.request_manager.get(url, **kwargs)
