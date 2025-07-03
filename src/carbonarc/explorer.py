@@ -1,9 +1,9 @@
 import pandas as pd
 from typing import Optional, Literal, Union, List, Dict, Any
 
-from carbonarc.base.utils import timeseries_response_to_pandas
-from carbonarc.base.client import BaseAPIClient
-from carbonarc.base.exceptions import InvalidConfigurationError
+from carbonarc.utils.timeseries import timeseries_response_to_pandas
+from carbonarc.utils.client import BaseAPIClient
+from carbonarc.utils.exceptions import InvalidConfigurationError
 
 
 class ExplorerAPIClient(BaseAPIClient):
