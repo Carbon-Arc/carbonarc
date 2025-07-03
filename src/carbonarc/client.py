@@ -57,6 +57,6 @@ class PlatformAPIClient(BaseAPIClient):
         Returns:
             Dictionary of order details.
         """
-        url = f"{self.base_platform_url}/orders/{order_id}"
+        url = f"{self.base_platform_url}/me/orders/{order_id}"
         return self._get(url)
     
