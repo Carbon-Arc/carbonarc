@@ -1,8 +1,8 @@
 import logging
 from typing import Literal
 
-from carbonarc.base.auth import TokenAuth
-from carbonarc.base.manager import HttpRequestManager
+from carbonarc.utils.auth import TokenAuth
+from carbonarc.utils.manager import HttpRequestManager
 
 
 class BaseAPIClient:

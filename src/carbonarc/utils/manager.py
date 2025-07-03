@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from requests.auth import AuthBase
 
 from carbonarc import __version__
-from carbonarc.base.exceptions import AuthenticationError
+from carbonarc.utils.exceptions import AuthenticationError
 
 
 class HttpRequestManager:
