@@ -1,9 +1,12 @@
 import pandas as pd
 from typing import Optional, Literal, Union, List, Dict, Any
+import logging
 
 from carbonarc.utils.timeseries import timeseries_response_to_pandas
 from carbonarc.utils.client import BaseAPIClient
 from carbonarc.utils.exceptions import InvalidConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 class ExplorerAPIClient(BaseAPIClient):
@@ -147,9 +150,10 @@ class ExplorerAPIClient(BaseAPIClient):
     def get_framework_data(
         self,
         framework_id: str,
-        page: int = 1,
-        page_size: int = 100,
         data_type: Optional[Literal["dataframe", "timeseries"]] = None,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        fetch_all: bool = True,
     ) -> Union[pd.DataFrame, dict]:
         """
         Retrieve data for a specific framework.
@@ -164,7 +168,12 @@ class ExplorerAPIClient(BaseAPIClient):
             Data as a DataFrame, dictionary, or timeseries, depending on data_type.
         """
         endpoint = f"{framework_id}/data"
-        url = f"{self.base_framework_url}/{endpoint}?page={page}&size={page_size}"
+        if fetch_all:
+            if page or size:
+                logger.warning("Page and size are ignored when fetch_all is True")
+            url = f"{self.base_framework_url}/{endpoint}?fetch_all=true"
+        else:
+            url = f"{self.base_framework_url}/{endpoint}?page={page}&size={size}"
         if data_type:
             url += f"&data_type={data_type}"
         if data_type == "dataframe":
@@ -177,7 +186,6 @@ class ExplorerAPIClient(BaseAPIClient):
     def stream_framework_data(
         self,
         framework_id: str,
-        page_size: int = 100,
         data_type: Optional[Literal["dataframe", "timeseries"]] = None,
     ):
         """
@@ -195,8 +203,7 @@ class ExplorerAPIClient(BaseAPIClient):
         while True:
             response = self.get_framework_data(
                 framework_id=framework_id,
-                page=page,
-                page_size=page_size,
+                fetch_all=True,
             )
             if not response:
                 break
