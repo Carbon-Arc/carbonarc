@@ -4,8 +4,8 @@ from io import BytesIO
 from typing import Optional
 import base64
 
-from carbonarc.base.client import BaseAPIClient
-from carbonarc.base.utils import is_valid_date
+from carbonarc.utils.client import BaseAPIClient
+from carbonarc.utils.timeseries import is_valid_date
 
 log = logging.getLogger(__name__)
 
@@ -128,22 +128,7 @@ class DataAPIClient(BaseAPIClient):
 
         return self._post(url, json={"order": {"dataset_id": dataset_id, "file_urls": file_urls}})
     
-    def get_order_details(self, order_id: str) -> dict:
-        """
-        Get the details of an order from the Carbon Arc API.
-
-        Args:
-            order_id (str): The ID of the order to get details for.
-
-        Returns:
-            dict: A dictionary containing the details of the order.
-        """
-        endpoint = f"data/order/{order_id}"
-        url = f"{self.base_data_url}/{endpoint}"
-
-        return self._get(url)
-    
-    def download_file(self, file_id: str, directory: str = "./") -> str:
+    def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024):
         """
         Download a data file from the Carbon Arc API to a local directory.
 

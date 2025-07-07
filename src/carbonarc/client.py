@@ -1,31 +1,62 @@
-from carbonarc.data import DataAPIClient
-from carbonarc.explorer import ExplorerAPIClient
-from carbonarc.hub import HubAPIClient
-from carbonarc.platform import PlatformAPIClient
-from carbonarc.ontology import OntologyAPIClient
+from carbonarc.utils.client import BaseAPIClient
 
-
-class CarbonArcClient:
+class PlatformAPIClient(BaseAPIClient):
     """
-    A client for interacting with the Carbon Arc API.
+    A client for interacting with the Carbon Arc Platform API.
     """
 
     def __init__(
-        self,
+        self, 
         token: str,
         host: str = "https://api.carbonarc.co",
-        version: str = "v2",
-    ):
+        version: str = "v2"
+        ):
         """
-        Initialize CarbonArcClient with an authentication token and user agent.
+        Initialize PlatformAPIClient.
+
+        Args:
+            token: Authentication token for requests.
+            host: Base URL of the Carbon Arc API.
+            version: API version to use.
+        """
+        super().__init__(token=token, host=host, version=version)
+        
+        self.base_platform_url = self._build_base_url("clients")
+
+    def get_balance(self) -> dict:
+        """
+        Retrieve balance for the current user.
+        """
+        url = f"{self.base_platform_url}/me/balance"
+        return self._get(url)
+    
+    def get_usage(self) -> dict:
+        """
+        Retrieve usage for the current user.
+        """
+        url = f"{self.base_platform_url}/me/usage"
+        return self._get(url)
+    
+    def get_order_history(self) -> dict:
+        """
+        Retrieve order history.
+
+        Returns:
+            Dictionary of order history.
+        """
+        url = f"{self.base_platform_url}/me/orders"
+        return self._get(url)
+    
+    def get_order_details(self, order_id: str) -> dict:
+        """
+        Retrieve details for a specific order.
         
         Args:
-            token (str): The authentication token to be used for requests.
-            host (str): The base URL of the Carbon Arc API.
-            version (str): The API version to use.
+            order_id: ID of the order to retrieve details for.
+
+        Returns:
+            Dictionary of order details.
         """
-        self.data = DataAPIClient(token=token, host=host, version=version)
-        self.explorer = ExplorerAPIClient(token=token, host=host, version=version)
-        self.hub = HubAPIClient(token=token, host=host, version=version)
-        self.platform = PlatformAPIClient(token=token, host=host, version=version)
-        self.ontology = OntologyAPIClient(token=token, host=host, version=version)
+        url = f"{self.base_platform_url}/me/orders/{order_id}"
+        return self._get(url)
+    

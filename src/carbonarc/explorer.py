@@ -1,9 +1,12 @@
 import pandas as pd
 from typing import Optional, Literal, Union, List, Dict, Any
+import logging
 
-from carbonarc.base.utils import timeseries_response_to_pandas
-from carbonarc.base.client import BaseAPIClient
-from carbonarc.base.exceptions import InvalidConfigurationError
+from carbonarc.utils.timeseries import timeseries_response_to_pandas
+from carbonarc.utils.client import BaseAPIClient
+from carbonarc.utils.exceptions import InvalidConfigurationError
+
+logger = logging.getLogger(__name__)
 
 
 class ExplorerAPIClient(BaseAPIClient):
@@ -109,9 +112,6 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/order"
         price = self._post(url, json={"framework": framework}).get("price", None)
         
-        if not price:
-            raise InvalidConfigurationError("Framework price is not available.")
-        
         return price
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
@@ -147,9 +147,10 @@ class ExplorerAPIClient(BaseAPIClient):
     def get_framework_data(
         self,
         framework_id: str,
-        page: int = 1,
-        page_size: int = 100,
         data_type: Optional[Literal["dataframe", "timeseries"]] = None,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        fetch_all: bool = True,
     ) -> Union[pd.DataFrame, dict]:
         """
         Retrieve data for a specific framework.
@@ -157,14 +158,19 @@ class ExplorerAPIClient(BaseAPIClient):
         Args:
             framework_id: Framework ID.
             page: Page number (default 1).
-            page_size: Number of items per page (default 100).
+            size: Number of items per page (default 100).
             data_type: Data type to retrieve ("dataframe" or "timeseries").
 
         Returns:
             Data as a DataFrame, dictionary, or timeseries, depending on data_type.
         """
         endpoint = f"{framework_id}/data"
-        url = f"{self.base_framework_url}/{endpoint}?page={page}&size={page_size}"
+        if fetch_all:
+            if page or size:
+                logger.warning("Page and size are ignored when fetch_all is True")
+            url = f"{self.base_framework_url}/{endpoint}?fetch_all=true"
+        else:
+            url = f"{self.base_framework_url}/{endpoint}?page={page}&size={size}"
         if data_type:
             url += f"&data_type={data_type}"
         if data_type == "dataframe":
@@ -177,7 +183,6 @@ class ExplorerAPIClient(BaseAPIClient):
     def stream_framework_data(
         self,
         framework_id: str,
-        page_size: int = 100,
         data_type: Optional[Literal["dataframe", "timeseries"]] = None,
     ):
         """
@@ -195,8 +200,7 @@ class ExplorerAPIClient(BaseAPIClient):
         while True:
             response = self.get_framework_data(
                 framework_id=framework_id,
-                page=page,
-                page_size=page_size,
+                fetch_all=True,
             )
             if not response:
                 break

@@ -1,4 +1,4 @@
-from carbonarc.base.client import BaseAPIClient
+from carbonarc.utils.client import BaseAPIClient
 
 class HubAPIClient(BaseAPIClient):
     """
