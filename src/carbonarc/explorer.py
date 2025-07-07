@@ -158,7 +158,7 @@ class ExplorerAPIClient(BaseAPIClient):
         Args:
             framework_id: Framework ID.
             page: Page number (default 1).
-            page_size: Number of items per page (default 100).
+            size: Number of items per page (default 100).
             data_type: Data type to retrieve ("dataframe" or "timeseries").
 
         Returns:
