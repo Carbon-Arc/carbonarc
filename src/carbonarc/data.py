@@ -185,14 +185,17 @@ class DataAPIClient(BaseAPIClient):
 
         # Extract filename from response headers
         filename = (
-            response.headers["Content-Disposition"].split("filename=")[1].strip('"')
+            response.headers["content-disposition"].split("filename=")[1].strip('"')
         )
 
         # Create the full S3 key (path + filename)
         s3_key = f"{s3_key_prefix.rstrip('/')}/{filename}"
 
         # Check if file is small enough for direct upload
-        content_length = int(response.headers.get("Content-Length", 0))
+        content_length = int(
+            response.headers.get("x-file-size")
+            or response.headers.get("content-length", 0)
+        )
 
         # If file is small (less than 10MB) or content length is unknown, use simple upload
         if content_length > 0 and content_length < 10 * 1024 * 1024:
@@ -268,14 +271,17 @@ class DataAPIClient(BaseAPIClient):
 
             # Complete the multipart upload only if we have parts
             if parts:
-                s3_client.complete_multipart_upload(
+                result = s3_client.complete_multipart_upload(
                     Bucket=s3_bucket,
                     Key=s3_key,
                     UploadId=upload_id,
                     MultipartUpload={"Parts": parts},
                 )
 
-                log.info(f"File uploaded successfully to s3://{s3_bucket}/{s3_key}")
+                if isinstance(result, dict) and "Errors" in result:
+                    raise RuntimeError(f"Multipart upload failed: {result['Errors']}")
+                else:
+                    log.info(f"File uploaded successfully to s3://{s3_bucket}/{s3_key}")
             else:
                 # No parts were uploaded, likely an empty file
                 s3_client.abort_multipart_upload(
