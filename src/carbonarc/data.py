@@ -128,13 +128,14 @@ class DataAPIClient(BaseAPIClient):
 
         return self._post(url, json={"order": {"dataset_id": dataset_id, "file_urls": file_urls}})
     
-    def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024):
+    def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024) -> str:
         """
         Download a data file from the Carbon Arc API to a local directory.
 
         Args:
             file_id (str): The ID of the file to download.
             directory (str): The directory to save the file to. Defaults to current directory.
+            chunk_size (int): The chunk size to use for the download. Defaults to 5MB.
 
         Returns:
             str: The path to the downloaded file.
@@ -162,7 +163,7 @@ class DataAPIClient(BaseAPIClient):
 
         # Stream the response to file
         with open(file_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024 * 1024):  # Read in 1MB chunks
+            for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:
                     f.write(chunk)
 
