@@ -143,24 +143,46 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url)
     
-    def download_file(self, file_id: str, directory: str = "./"):
+    def download_file(self, file_id: str, directory: str = "./") -> str:
         """
-        Download a data file from the Carbon Arc API.
+        Download a data file from the Carbon Arc API to a local directory.
 
         Args:
             file_id (str): The ID of the file to download.
+            directory (str): The directory to save the file to. Defaults to current directory.
 
         Returns:
-            dict: A dictionary containing the file.
+            str: The path to the downloaded file.
         """
-        # get full path of directory
+        # Get full path of directory and ensure it exists
         output_dir = os.path.abspath(directory)
+        os.makedirs(output_dir, exist_ok=True)
         
-        file_id = file_id.split("/")[-1]
-        endpoint = f"data/files/{file_id}"
-        url = f"{self.base_data_url}/{endpoint}?directory={output_dir}"
+        # Extract filename from file_id
+        file_id_clean = file_id.split("/")[-1]
+        endpoint = f"data/files/{file_id_clean}"
+        url = f"{self.base_data_url}/{endpoint}"
 
-        return self._stream(url)
+        # Make the request
+        response = self.request_manager.get_stream(url)
+        response.raise_for_status()
+
+        # Extract filename from response headers or use file_id as fallback
+        filename = response.headers["content-disposition"].split("filename=")[1].strip('"')
+
+        # Create the full file path
+        file_path = os.path.join(output_dir, filename)
+        
+        log.info(f"Downloading file {file_id} to {file_path}")
+
+        # Stream the response to file
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):  # Read in 1MB chunks
+                if chunk:
+                    f.write(chunk)
+
+        log.info(f"File downloaded successfully to {file_path}")
+        return file_path
 
     def download_data_to_s3(
         self,
@@ -184,9 +206,7 @@ class DataAPIClient(BaseAPIClient):
         response.raise_for_status()
 
         # Extract filename from response headers
-        filename = (
-            response.headers["content-disposition"].split("filename=")[1].strip('"')
-        )
+        filename = response.headers["content-disposition"].split("filename=")[1].strip('"')
 
         # Create the full S3 key (path + filename)
         s3_key = f"{s3_key_prefix.rstrip('/')}/{filename}"
