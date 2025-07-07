@@ -128,24 +128,47 @@ class DataAPIClient(BaseAPIClient):
 
         return self._post(url, json={"order": {"dataset_id": dataset_id, "file_urls": file_urls}})
     
-    def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024):
+    def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024) -> str:
         """
-        Download a data file from the Carbon Arc API.
+        Download a data file from the Carbon Arc API to a local directory.
 
         Args:
             file_id (str): The ID of the file to download.
+            directory (str): The directory to save the file to. Defaults to current directory.
+            chunk_size (int): The chunk size to use for the download. Defaults to 5MB.
 
         Returns:
-            dict: A dictionary containing the file.
+            str: The path to the downloaded file.
         """
-        # get full path of directory
+        # Get full path of directory and ensure it exists
         output_dir = os.path.abspath(directory)
+        os.makedirs(output_dir, exist_ok=True)
         
-        file_id = file_id.split("/")[-1]
-        endpoint = f"data/files/{file_id}"
-        url = f"{self.base_data_url}/{endpoint}?directory={output_dir}&chunk_size={chunk_size}"
+        # Extract filename from file_id
+        file_id_clean = file_id.split("/")[-1]
+        endpoint = f"data/files/{file_id_clean}"
+        url = f"{self.base_data_url}/{endpoint}"
 
-        return self._stream(url)
+        # Make the request
+        response = self.request_manager.get_stream(url)
+        response.raise_for_status()
+
+        # Extract filename from response headers or use file_id as fallback
+        filename = response.headers["content-disposition"].split("filename=")[1].strip('"')
+
+        # Create the full file path
+        file_path = os.path.join(output_dir, filename)
+        
+        log.info(f"Downloading file {file_id} to {file_path}")
+
+        # Stream the response to file
+        with open(file_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+
+        log.info(f"File downloaded successfully to {file_path}")
+        return file_path
 
     def download_data_to_s3(
         self,
@@ -154,7 +177,7 @@ class DataAPIClient(BaseAPIClient):
         s3_bucket: str,
         s3_key_prefix: str,
         chunk_size: int = 5 * 1024 * 1024,  # Default to 5MB
-    ):
+    ) -> str:
         log.info(f"Downloading file {file_url} to S3...")
 
         # Ensure chunk size is at least 5MB (AWS requirement for multipart uploads)
@@ -169,15 +192,16 @@ class DataAPIClient(BaseAPIClient):
         response.raise_for_status()
 
         # Extract filename from response headers
-        filename = (
-            response.headers["Content-Disposition"].split("filename=")[1].strip('"')
-        )
+        filename = response.headers["content-disposition"].split("filename=")[1].strip('"')
 
         # Create the full S3 key (path + filename)
         s3_key = f"{s3_key_prefix.rstrip('/')}/{filename}"
 
         # Check if file is small enough for direct upload
-        content_length = int(response.headers.get("Content-Length", 0))
+        content_length = int(
+            response.headers.get("x-file-size")
+            or response.headers.get("content-length", 0)
+        )
 
         # If file is small (less than 10MB) or content length is unknown, use simple upload
         if content_length > 0 and content_length < 10 * 1024 * 1024:
@@ -253,14 +277,17 @@ class DataAPIClient(BaseAPIClient):
 
             # Complete the multipart upload only if we have parts
             if parts:
-                s3_client.complete_multipart_upload(
+                result = s3_client.complete_multipart_upload(
                     Bucket=s3_bucket,
                     Key=s3_key,
                     UploadId=upload_id,
                     MultipartUpload={"Parts": parts},
                 )
 
-                log.info(f"File uploaded successfully to s3://{s3_bucket}/{s3_key}")
+                if isinstance(result, dict) and "Errors" in result:
+                    raise RuntimeError(f"Multipart upload failed: {result['Errors']}")
+                else:
+                    log.info(f"File uploaded successfully to s3://{s3_bucket}/{s3_key}")
             else:
                 # No parts were uploaded, likely an empty file
                 s3_client.abort_multipart_upload(
