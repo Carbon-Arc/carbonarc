@@ -191,7 +191,7 @@ class DataAPIClient(BaseAPIClient):
         s3_bucket: str,
         s3_key_prefix: str,
         chunk_size: int = 5 * 1024 * 1024,  # Default to 5MB
-    ):
+    ) -> str:
         log.info(f"Downloading file {file_url} to S3...")
 
         # Ensure chunk size is at least 5MB (AWS requirement for multipart uploads)
