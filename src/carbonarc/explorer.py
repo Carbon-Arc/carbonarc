@@ -112,9 +112,6 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/order"
         price = self._post(url, json={"framework": framework}).get("price", None)
         
-        if not price:
-            raise InvalidConfigurationError("Framework price is not available.")
-        
         return price
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
