@@ -129,7 +129,7 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/filters/{filter_key}/options"
         return self._post(url, json={"framework": framework})
 
-    def buy_frameworks(self, order: List[dict]) -> dict:
+    def buy_frameworks(self, order: Union[List[dict], dict]) -> dict:
         """
         Purchase one or more frameworks.
 
@@ -139,6 +139,8 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Dictionary with purchase information.
         """
+        if isinstance(order, dict):
+            order = [order]
         for framework in order:
             self._validate_framework(framework)
         url = f"{self.base_framework_url}/buy"
