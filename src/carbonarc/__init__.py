@@ -7,7 +7,7 @@ try:
 except ImportError:
     __version__ = "unkown"
 
-from carbonarc.client import APIClient
+from carbonarc.base import CarbonArcClient
 
 
-__all__ = ["APIClient"]
+__all__ = ["CarbonArcClient"]
