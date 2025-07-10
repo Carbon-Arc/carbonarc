@@ -31,7 +31,7 @@ class ExplorerAPIClient(BaseAPIClient):
 
     @staticmethod
     def build_framework(
-        entities: Union[List[Dict], Literal["*"]],
+        entities: Union[List[Dict], str],
         insight: int,
         filters: Dict[str, Any],
         aggregate: Optional[Literal["sum", "mean"]] = None
@@ -40,7 +40,7 @@ class ExplorerAPIClient(BaseAPIClient):
         Build a framework payload for the API.
 
         Args:
-            entities: List of entity dicts (with "carc_id" and "representation").
+            entities: List of entity dicts (with "carc_id" and "representation") or a representation string.
             insight: Insight ID.
             filters: Filters to apply.
             aggregate: Aggregation method ("sum" or "mean").
@@ -48,9 +48,9 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Framework dictionary.
         """
-        if entities == "*":
+        if isinstance(entities, str):
             return {
-                "entities": [{"carc_name": "*"}],
+                "entities": {"carc_name": "*", "representation": entities},
                 "insight": {"insight_id": insight},
                 "filters": filters,
                 "aggregate": aggregate
