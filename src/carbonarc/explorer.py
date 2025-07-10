@@ -31,7 +31,7 @@ class ExplorerAPIClient(BaseAPIClient):
 
     @staticmethod
     def build_framework(
-        entities: List[Dict],
+        entities: Union[List[Dict], str],
         insight: int,
         filters: Dict[str, Any],
         aggregate: Optional[Literal["sum", "mean"]] = None
@@ -40,7 +40,7 @@ class ExplorerAPIClient(BaseAPIClient):
         Build a framework payload for the API.
 
         Args:
-            entities: List of entity dicts (with "carc_id" and "representation").
+            entities: List of entity dicts (with "carc_id" and "representation") or a representation string.
             insight: Insight ID.
             filters: Filters to apply.
             aggregate: Aggregation method ("sum" or "mean").
@@ -48,12 +48,20 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Framework dictionary.
         """
-        return {
-            "entities": entities,
-            "insight": {"insight_id": insight},
-            "filters": filters,
-            "aggregate": aggregate
-        }
+        if isinstance(entities, str):
+            return {
+                "entities": {"carc_name": "*", "representation": entities},
+                "insight": {"insight_id": insight},
+                "filters": filters,
+                "aggregate": aggregate
+            }
+        else:
+            return {
+                "entities": entities,
+                "insight": {"insight_id": insight},
+                "filters": filters,
+                "aggregate": aggregate
+            }
 
     @staticmethod
     def _validate_framework(framework: dict):
@@ -71,14 +79,18 @@ class ExplorerAPIClient(BaseAPIClient):
         if "entities" not in framework:
             raise InvalidConfigurationError("Framework must have an 'entities' key.")
         if not isinstance(framework["entities"], list):
-            raise InvalidConfigurationError("Entities must be a list.")
+            raise InvalidConfigurationError("Entities must be a list or must be a wildcard.")
         if not all(isinstance(entity, dict) for entity in framework["entities"]):
             raise InvalidConfigurationError("Each entity must be a dictionary.")
         for entity in framework["entities"]:
-            if "carc_id" not in entity:
-                raise InvalidConfigurationError("Each entity must have a 'carc_id' key.")
-            if "representation" not in entity:
-                raise InvalidConfigurationError("Each entity must have a 'representation' key.")
+            if "carc_name" in entity:
+                if entity["carc_name"] != "*":
+                    raise InvalidConfigurationError("Wildcard entities must be represented as '*'.")
+            else:
+                if "carc_id" not in entity:
+                    raise InvalidConfigurationError("Each entity must have a 'carc_id' key.")
+                if "representation" not in entity:
+                    raise InvalidConfigurationError("Each entity must have a 'representation' key.")
         if not isinstance(framework["insight"], dict):
             raise InvalidConfigurationError("Insight must be a dictionary.")
         if "insight_id" not in framework["insight"]:

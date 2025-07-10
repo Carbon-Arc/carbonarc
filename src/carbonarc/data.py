@@ -1,7 +1,7 @@
 import os
 import logging
 from io import BytesIO
-from typing import Optional
+from typing import Optional, Literal
 import base64
 
 from carbonarc.utils.client import BaseAPIClient
@@ -74,6 +74,21 @@ class DataAPIClient(BaseAPIClient):
         """
         endpoint = f"graph/{graph_id}"
         url = f"{self.base_data_url}/{endpoint}"
+
+        return self._get(url)
+    
+    def get_graph_data(self, graph_id: str, download_type: Literal["csv", "json", "graphml"] = "csv") -> dict:
+        """
+        Get the information for a specific dataset from the Carbon Arc API.
+        
+        Args:
+            data_identifier (str): The identifier of the data to retrieve information for.
+            
+        Returns:
+            dict: A dictionary containing the information for the specified dataset.
+        """
+        endpoint = f"graph/{graph_id}/data"
+        url = f"{self.base_data_url}/{endpoint}?download_type={download_type}"
 
         return self._get(url)
 
