@@ -78,19 +78,17 @@ class ExplorerAPIClient(BaseAPIClient):
             raise InvalidConfigurationError("Framework must be a dictionary. Use build_framework().")
         if "entities" not in framework:
             raise InvalidConfigurationError("Framework must have an 'entities' key.")
-        if not isinstance(framework["entities"], list):
-            raise InvalidConfigurationError("Entities must be a list or must be a wildcard.")
-        if not all(isinstance(entity, dict) for entity in framework["entities"]):
-            raise InvalidConfigurationError("Each entity must be a dictionary.")
-        for entity in framework["entities"]:
-            if "carc_name" in entity:
-                if entity["carc_name"] != "*":
-                    raise InvalidConfigurationError("Wildcard entities must be represented as '*'.")
-            else:
-                if "carc_id" not in entity:
-                    raise InvalidConfigurationError("Each entity must have a 'carc_id' key.")
-                if "representation" not in entity:
-                    raise InvalidConfigurationError("Each entity must have a 'representation' key.")
+        entities = framework["entities"]
+        if isinstance(entities, list):
+            if not all(isinstance(entity, dict) for entity in entities):
+                raise InvalidConfigurationError("Each entity in the list must be a dictionary.")
+        elif isinstance(entities, dict):
+            if entities.get("carc_name") != "*" or "representation" not in entities:
+                raise InvalidConfigurationError(
+                    "If entities is a dictionary, it must be of the form {'carc_name': '*', 'representation': ...}."
+                )
+        else:
+            raise InvalidConfigurationError("Entities must be a list of dicts or a wildcard dictionary.")
         if not isinstance(framework["insight"], dict):
             raise InvalidConfigurationError("Insight must be a dictionary.")
         if "insight_id" not in framework["insight"]:
