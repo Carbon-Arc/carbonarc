@@ -114,9 +114,11 @@ class DataAPIClient(BaseAPIClient):
         params = {}
         
         if drop_date:
-            params["drop_date"] = drop_date
+            params["drop_date_operator"] = drop_date[0]
+            params["drop_date"] = drop_date[1]
         if logical_date:
-            params["logical_date"] = logical_date
+            params["logical_date_operator"] = logical_date[0]
+            params["logical_date"] = logical_date[1]
         
         return self._get(url, params=params)
     
