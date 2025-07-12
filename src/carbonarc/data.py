@@ -1,11 +1,11 @@
 import os
 import logging
 from io import BytesIO
-from typing import Optional, Literal
+from typing import Optional, Literal, Tuple, Union
+from datetime import datetime
 import base64
 
 from carbonarc.utils.client import BaseAPIClient
-from carbonarc.utils.timeseries import is_valid_date
 
 log = logging.getLogger(__name__)
 
@@ -95,8 +95,8 @@ class DataAPIClient(BaseAPIClient):
     def get_data_manifest(
         self,
         dataset_id: str,
-        created_since: Optional[str] = None,
-        updated_since: Optional[str] = None,
+        drop_date: Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]] = None,
+        logical_date: Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]] = None,
     ) -> dict:
         """
         Get the manifest for a specific data identifier from the Carbon Arc API.
@@ -112,20 +112,14 @@ class DataAPIClient(BaseAPIClient):
         endpoint = f"data/{dataset_id}/manifest"
         url = f"{self.base_data_url}/{endpoint}"
         params = {}
-        if created_since:
-            # validate created_since format
-            if not is_valid_date(created_since):
-                raise ValueError(
-                    "created_since must be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format."
-                )
-            params["created_since"] = created_since
-        if updated_since:
-            # validate updated_since format
-            if not is_valid_date(updated_since):
-                raise ValueError(
-                    "updated_since must be in YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS format."
-                )
-            params["updated_since"] = updated_since
+        
+        if drop_date:
+            params["drop_date_operator"] = drop_date[0]
+            params["drop_date"] = drop_date[1]
+        if logical_date:
+            params["logical_date_operator"] = logical_date[0]
+            params["logical_date"] = logical_date[1]
+        
         return self._get(url, params=params)
     
     def buy_data(self, dataset_id: str, file_urls: list[str]) -> dict:
