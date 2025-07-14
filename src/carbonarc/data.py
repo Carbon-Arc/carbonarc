@@ -103,8 +103,8 @@ class DataAPIClient(BaseAPIClient):
         
         Args:
             dataset_id (str): The identifier of the data to retrieve manifest for.
-            created_since (Optional[str]): The filter for created timestamp. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
-            updated_since (Optional[str]): The filter by updated timestamp, modification_time field. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
+            drop_date (Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]]): The filter for drop date.
+            logical_date (Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]]): The filter for logical date.
             
         Returns:
             dict: A dictionary containing the manifest for the specified data identifier.
