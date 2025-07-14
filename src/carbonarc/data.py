@@ -103,8 +103,8 @@ class DataAPIClient(BaseAPIClient):
         
         Args:
             dataset_id (str): The identifier of the data to retrieve manifest for.
-            created_since (Optional[str]): The filter for created timestamp. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
-            updated_since (Optional[str]): The filter by updated timestamp, modification_time field. Format is YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS.
+            drop_date (Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]]): The filter for drop date.
+            logical_date (Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]]): The filter for logical date.
             
         Returns:
             dict: A dictionary containing the manifest for the specified data identifier.
@@ -130,7 +130,7 @@ class DataAPIClient(BaseAPIClient):
             order (dict): The order to buy data for.
             
         Returns:
-            dict: A dictionary containing the information for the specified order.
+            dict: A dictionary containing the information for the specified order. The file_urls in this dictionary contain the ids of the files that were bought.
         """
         endpoint = "data/buy"
         url = f"{self.base_data_url}/{endpoint}"
@@ -142,7 +142,7 @@ class DataAPIClient(BaseAPIClient):
         Download a data file from the Carbon Arc API to a local directory.
 
         Args:
-            file_id (str): The ID of the file to download.
+            file_id (str): The ID of the file to download. These ids come from the file_urls in the buy_data returned dictionary.
             directory (str): The directory to save the file to. Defaults to current directory.
             chunk_size (int): The chunk size to use for the download. Defaults to 5MB.
 
