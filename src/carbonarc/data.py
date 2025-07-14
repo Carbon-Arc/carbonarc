@@ -130,7 +130,7 @@ class DataAPIClient(BaseAPIClient):
             order (dict): The order to buy data for.
             
         Returns:
-            dict: A dictionary containing the information for the specified order.
+            dict: A dictionary containing the information for the specified order. The file_urls in this dictionary contain the ids of the files that were bought.
         """
         endpoint = "data/buy"
         url = f"{self.base_data_url}/{endpoint}"
@@ -142,7 +142,7 @@ class DataAPIClient(BaseAPIClient):
         Download a data file from the Carbon Arc API to a local directory.
 
         Args:
-            file_id (str): The ID of the file to download.
+            file_id (str): The ID of the file to download. These ids come from the file_urls in the buy_data returned dictionary.
             directory (str): The directory to save the file to. Defaults to current directory.
             chunk_size (int): The chunk size to use for the download. Defaults to 5MB.
 
