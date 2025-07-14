@@ -22,24 +22,42 @@ class HubAPIClient(BaseAPIClient):
         super().__init__(token=token, host=host, version=version)
         
         self.base_hub_url = self._build_base_url("hub")
+        self.base_webcontent_url = self._build_base_url("webcontent")
     
     def get_webcontent_feeds(self) -> dict:
         """
         Retrieve all webcontent feeds.
         """
-        url = f"{self.base_hub_url}/webcontent"
+        url = f"{self.base_webcontent_url}"
         return self._get(url)
     
     def get_subscribed_feeds(self) -> dict:
         """
         Retrieve all subscribed webcontent feeds.
         """
-        url = f"{self.base_hub_url}/webcontent/subscribed"
+        url = f"{self.base_webcontent_url}/subscribed"
         return self._get(url)
     
     def get_webcontent_data(self, webcontent_name: str, page: int = 1, size: int = 100) -> dict:
         """
         Retrieve a webcontent feed by name.
         """
-        url = f"{self.base_hub_url}/webcontent/{webcontent_name}?page={page}&size={size}"
+        webcontent_name = webcontent_name.lower()
+        url = f"{self.base_webcontent_url}/{webcontent_name}"
+        return self._get(url)
+    
+    def get_webcontent_dataframe(self, webcontent_name: str) -> dict:
+        """
+        Retrieve a webcontent dataframe by name.
+        """
+        webcontent_name = webcontent_name.lower()
+        url = f"{self.base_webcontent_url}/{webcontent_name}/dataframe"
+        return self._get(url)
+
+    # TODO: Download Webcontent information
+    def get_webcontent_file(self, file_name: str) -> dict:
+        """
+        Retrieve a webcontent file by name.
+        """
+        url = f"{self.base_webcontent_url}/file/{file_name}"
         return self._get(url)
