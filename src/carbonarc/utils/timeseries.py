@@ -14,7 +14,7 @@ def timeseries_response_to_pandas(response: Union[dict, pd.DataFrame]) -> pd.Dat
     """
     
     if isinstance(response, pd.DataFrame):
-        response["date"] = pd.to_datetime(response["date"])
+        response["date"] = pd.to_datetime(response["date"]).dt.date
         return response
     
     elif isinstance(response, dict):
@@ -25,7 +25,7 @@ def timeseries_response_to_pandas(response: Union[dict, pd.DataFrame]) -> pd.Dat
         series = []
         for item in response_data:
             df = pd.DataFrame(item["series"])
-            df["date"] = pd.to_datetime(df["date"])
+            df["date"] = pd.to_datetime(df["date"]).dt.date
             df["entity_representation"] = item["entity_representation"]
             df["entity_id"] = item["entity_id"]
             df["entity_name"] = item["entity_name"]
