@@ -186,7 +186,10 @@ class ExplorerAPIClient(BaseAPIClient):
         if data_type:
             url += f"&data_type={data_type}"
         if data_type == "dataframe":
-            return pd.DataFrame(self._get(url).get("data", {}))
+            df = pd.DataFrame(self._get(url).get("data", {}))
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"]).dt.date
+            return df
         elif data_type == "timeseries":
             return timeseries_response_to_pandas(response=self._get(url))
         else:
