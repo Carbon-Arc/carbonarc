@@ -29,9 +29,9 @@ class ExplorerAPIClient(BaseAPIClient):
         super().__init__(token=token, host=host, version=version)
         self.base_framework_url = self._build_base_url("framework")
 
-    @staticmethod
     def build_framework(
-        entities: Union[List[Dict], str],
+        self,
+        entities: Union[List[Dict], Dict, str],
         insight: int,
         filters: Dict[str, Any],
         aggregate: Optional[Literal["sum", "mean"]] = None
@@ -48,23 +48,14 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Framework dictionary.
         """
-        if isinstance(entities, str):
-            return {
-                "entities": {"carc_name": "*", "representation": entities},
-                "insight": {"insight_id": insight},
-                "filters": filters,
-                "aggregate": aggregate
-            }
-        else:
-            return {
-                "entities": entities,
-                "insight": {"insight_id": insight},
-                "filters": filters,
-                "aggregate": aggregate
-            }
+        return {
+            "entities": self._clean_entities(entities),
+            "insight": self._clean_insight(insight),
+            "filters": filters,
+            "aggregate": aggregate
+        }
 
-    @staticmethod
-    def _validate_framework(framework: dict):
+    def _validate_framework(self, framework: dict):
         """
         Validate a framework dictionary for required structure.
 
@@ -74,6 +65,10 @@ class ExplorerAPIClient(BaseAPIClient):
         Raises:
             InvalidConfigurationError: If the framework is invalid.
         """
+        
+        framework["entities"] = self._clean_entities(framework["entities"])
+        framework["insight"] = self._clean_insight(framework["insight"])
+        
         if not isinstance(framework, dict):
             raise InvalidConfigurationError("Framework must be a dictionary. Use build_framework().")
         if "entities" not in framework:
@@ -93,6 +88,52 @@ class ExplorerAPIClient(BaseAPIClient):
             raise InvalidConfigurationError("Insight must be a dictionary.")
         if "insight_id" not in framework["insight"]:
             raise InvalidConfigurationError("Insight must have an 'insight_id' key.")
+        
+        return framework
+        
+    @staticmethod
+    def _clean_entities(entities: Union[List[Dict], Dict, str]) -> Union[List[Dict], Dict]:
+        """
+        Clean the entities list.
+        """
+        if isinstance(entities, str):
+            return {"carc_name": "*", "representation": entities}
+        
+        elif isinstance(entities, dict):
+            entities = [entities]
+
+        for entity in entities:
+            if "id" in entity:
+                entity["carc_id"] = entity["id"]
+            elif "entity_id" in entity:
+                entity["carc_id"] = entity["entity_id"]
+                
+        # clean up extra keys
+        for entity in entities:
+            if "id" in entity:
+                del entity["id"]
+            elif "entity_id" in entity:
+                del entity["entity_id"]
+        
+        return entities
+    
+    @staticmethod
+    def _clean_insight(insight: Union[int, str, dict]) -> dict:
+        """
+        Clean the insight.
+        """
+        if isinstance(insight, int):
+            return {"insight_id": insight}
+        elif isinstance(insight, str):
+            return {"insight_id": int(insight)}
+        elif isinstance(insight, dict):
+            if "id" in insight:
+                insight["insight_id"] = insight["id"]
+                del insight["id"]
+            elif "carc_id" in insight:
+                insight["insight_id"] = insight["carc_id"]
+                del insight["carc_id"]
+            return insight
 
     def collect_framework_filters(self, framework: dict) -> dict:
         """
@@ -104,7 +145,7 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Dictionary of available filters.
         """
-        self._validate_framework(framework)
+        framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters"
         return self._post(url, json={"framework": framework})
     
@@ -118,7 +159,7 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Dictionary of available filters.
         """
-        self._validate_framework(framework)
+        framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/order"
         price = self._post(url, json={"framework": framework}).get("price", None)
         
@@ -135,7 +176,7 @@ class ExplorerAPIClient(BaseAPIClient):
         Returns:
             Dictionary of filter options.
         """
-        self._validate_framework(framework)
+        framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters/{filter_key}/options"
         return self._post(url, json={"framework": framework})
 
@@ -151,10 +192,12 @@ class ExplorerAPIClient(BaseAPIClient):
         """
         if isinstance(order, dict):
             order = [order]
+        
+        validated_order = []
         for framework in order:
-            self._validate_framework(framework)
+            validated_order.append(self._validate_framework(framework))
         url = f"{self.base_framework_url}/buy"
-        return self._post(url, json={"order": {"frameworks": order}})
+        return self._post(url, json={"order": {"frameworks": validated_order}})
 
     def get_framework_data(
         self,
