@@ -1,3 +1,9 @@
+from typing import Optional, Tuple, Union
+from datetime import datetime
+from typing import Literal
+import json
+import os
+
 from carbonarc.utils.client import BaseAPIClient
 
 class HubAPIClient(BaseAPIClient):
@@ -38,13 +44,20 @@ class HubAPIClient(BaseAPIClient):
         url = f"{self.base_webcontent_url}/subscribed"
         return self._get(url)
     
-    def get_webcontent_data(self, webcontent_name: str, page: int = 1, size: int = 100) -> dict:
+    
+    def get_webcontent_manifest(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]] = None,) -> dict:
         """
-        Retrieve a webcontent feed by name.
+        Retrieve a webcontent manifest by id and date.
         """
-        webcontent_name = webcontent_name.lower()
-        url = f"{self.base_webcontent_url}/{webcontent_name}"
-        return self._get(url)
+        url = f"{self.base_webcontent_url}/{webcontent_id}/manifest"
+        if webcontent_date:
+            params = {
+                "webcontent_date_operator": webcontent_date[0],
+                "webcontent_date": webcontent_date[1]
+            }
+            return self._get(url, params=params)
+        else:
+            return self._get(url)
     
     def get_webcontent_dataframe(self, webcontent_name: str) -> dict:
         """
@@ -53,11 +66,27 @@ class HubAPIClient(BaseAPIClient):
         webcontent_name = webcontent_name.lower()
         url = f"{self.base_webcontent_url}/{webcontent_name}/dataframe"
         return self._get(url)
-
-    # TODO: Download Webcontent information
+    
     def get_webcontent_file(self, file_name: str) -> dict:
         """
-        Retrieve a webcontent file by name.
+        Retrieve a webcontent data by file name.
         """
         url = f"{self.base_webcontent_url}/file/{file_name}"
         return self._get(url)
+        
+    def download_webcontent_file(self, file_name: str, directory: str = "./") -> str:
+        """
+        Download a webcontent file by name.
+        """
+        
+        # Get full path of directory and ensure it exists
+        output_dir = os.path.abspath(directory)
+        os.makedirs(output_dir, exist_ok=True)
+        
+        webcontent = self.get_webcontent_file(file_name)
+
+        with open(os.path.join(output_dir, file_name.split("/")[-1]), 'w') as f:
+            json.dump(webcontent, f)
+
+        return webcontent
+
