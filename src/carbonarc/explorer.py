@@ -99,6 +99,12 @@ class ExplorerAPIClient(BaseAPIClient):
         if isinstance(entities, str):
             return {"carc_name": "*", "representation": entities}
         
+        elif isinstance(entities, dict) and "carc_name" in entities and "representation" in entities:
+            return entities
+        
+        elif isinstance(entities, dict) and "representation" in entities and len(entities) == 1:
+            return {"carc_name": "*", "representation": list(entities.values())[0]}
+        
         elif isinstance(entities, dict):
             entities = [entities]
 
