@@ -95,16 +95,16 @@ class DataAPIClient(BaseAPIClient):
     def get_data_manifest(
         self,
         dataset_id: str,
-        drop_date: Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]] = None,
-        logical_date: Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]] = None,
+        drop_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,
+        logical_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,
     ) -> dict:
         """
         Get the manifest for a specific data identifier from the Carbon Arc API.
         
         Args:
             dataset_id (str): The identifier of the data to retrieve manifest for.
-            drop_date (Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]]): The filter for drop date.
-            logical_date (Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]]): The filter for logical date.
+            drop_date (Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]]): The filter for drop date.
+            logical_date (Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]]): The filter for logical date.
             
         Returns:
             dict: A dictionary containing the manifest for the specified data identifier.
