@@ -238,6 +238,46 @@ class ExplorerAPIClient(BaseAPIClient):
         else:
             return self._get(url)
 
+    def get_framework_panel_debias_data(
+        self,
+        framework_id: str,
+        insight_id: Optional[int] = None,
+        data_type: Optional[Literal["dataframe", "timeseries"]] = None,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        fetch_all: bool = True,
+    ) -> Union[pd.DataFrame, dict]:
+        """
+        Retrieve data for a specific framework panel debias.
+        """
+        endpoint = f"{framework_id}/panel-debias"
+        url = f"{self.base_framework_url}/{endpoint}"
+        params = {}
+        if fetch_all:
+            params["fetch_all"] = "true"
+        else:
+            if page is not None:
+                params["page"] = page
+            if size is not None:
+                params["size"] = size
+        if insight_id is not None:
+            params["insight_id"] = insight_id
+        if data_type is not None:
+            params["data_type"] = data_type
+
+        response = self._get(url, params=params)
+
+        if data_type == "dataframe":
+            df = pd.DataFrame(response.get("data", {}))
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"]).dt.date
+            return df
+        elif data_type == "timeseries":
+            return timeseries_response_to_pandas(response=response)
+        else:
+            return response
+    
+            
     def stream_framework_data(
         self,
         framework_id: str,
