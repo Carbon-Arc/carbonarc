@@ -45,7 +45,7 @@ class HubAPIClient(BaseAPIClient):
         return self._get(url)
     
     
-    def get_webcontent_manifest(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", "=>", "=="], Union[datetime, str]]] = None,) -> dict:
+    def get_webcontent_manifest(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,) -> dict:
         """
         Retrieve a webcontent manifest by id and date.
         """
