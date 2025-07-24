@@ -248,7 +248,14 @@ class ExplorerAPIClient(BaseAPIClient):
         fetch_all: bool = True,
     ) -> Union[pd.DataFrame, dict]:
         """
-        Retrieve data for a specific framework panel debias.
+        Retrieve Panel Debias data for a specific framework. This will run a panel debias on the framework data using the framework as the value and the insight given at the location level as the reference.
+        Args:
+            framework_id: Framework ID.
+            insight_id: Insight ID to use as the reference for panel debiasing.
+            data_type: Data type to retrieve ("dataframe" or "timeseries").
+            page: Page number (default None).
+            size: Number of items per page (default None).
+            fetch_all: Whether to fetch all data (default True).
         """
         endpoint = f"{framework_id}/panel-debias"
         url = f"{self.base_framework_url}/{endpoint}"
