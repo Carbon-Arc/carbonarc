@@ -290,6 +290,13 @@ class ExplorerAPIClient(BaseAPIClient):
         else:
             return response
     
+    def get_valid_insights_for_framework_panel_debias(self, framework_id: str) -> List[int]:
+        """
+        Retrieve valid insights for a framework.
+        """
+        endpoint = f"{framework_id}/panel-debias-info"
+        url = f"{self.base_framework_url}/{endpoint}"
+        return self._get(url)
             
     def stream_framework_data(
         self,
