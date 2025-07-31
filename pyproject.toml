@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "carbonarc"
-version = "1.1.4"
+version = "1.1.5"
 description = "Carbon Arc - Python Package"
 authors = ["Carbon Arc <support@carbonarc.co>"]
 readme = "README.md"
