@@ -244,6 +244,60 @@ class ExplorerAPIClient(BaseAPIClient):
         else:
             return self._get(url)
 
+    def get_framework_panel_debias_data(
+        self,
+        framework_id: str,
+        insight_id: Optional[int] = None,
+        data_type: Optional[Literal["dataframe", "timeseries"]] = None,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        fetch_all: bool = True,
+    ) -> Union[pd.DataFrame, dict]:
+        """
+        Retrieve Panel Debias data for a specific framework. This will run a panel debias on the framework data using the framework as the value and the insight given at the location level as the reference.
+        Args:
+            framework_id: Framework ID.
+            insight_id: Insight ID to use as the reference for panel debiasing.
+            data_type: Data type to retrieve ("dataframe" or "timeseries").
+            page: Page number (default None).
+            size: Number of items per page (default None).
+            fetch_all: Whether to fetch all data (default True).
+        """
+        endpoint = f"{framework_id}/panel-debias"
+        url = f"{self.base_framework_url}/{endpoint}"
+        params = {}
+        if fetch_all:
+            params["fetch_all"] = "true"
+        else:
+            if page is not None:
+                params["page"] = page
+            if size is not None:
+                params["size"] = size
+        if insight_id is not None:
+            params["insight_id"] = insight_id
+        if data_type is not None:
+            params["data_type"] = data_type
+
+        response = self._get(url, params=params)
+
+        if data_type == "dataframe":
+            df = pd.DataFrame(response.get("data", {}))
+            if "date" in df.columns:
+                df["date"] = pd.to_datetime(df["date"]).dt.date
+            return df
+        elif data_type == "timeseries":
+            return timeseries_response_to_pandas(response=response)
+        else:
+            return response
+    
+    def get_valid_insights_for_framework_panel_debias(self, framework_id: str) -> List[int]:
+        """
+        Retrieve valid insights for a framework.
+        """
+        endpoint = f"{framework_id}/panel-debias-info"
+        url = f"{self.base_framework_url}/{endpoint}"
+        return self._get(url)
+            
     def stream_framework_data(
         self,
         framework_id: str,
