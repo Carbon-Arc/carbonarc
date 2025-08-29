@@ -236,3 +236,50 @@ class OntologyAPIClient(BaseAPIClient):
         """
         url = f"{self.base_ontology_url}/ontology-tree"
         return self._get(url)
+
+    def get_ontology_version_changes(
+        self, 
+        dataset_id: Optional[str] = None,
+        topic_id: Optional[int] = None,
+        entity_representation: Optional[str] = None,
+        page: int = 1,
+        size: int = 100,
+        order: str = "asc"
+    ) -> Dict[str, Any]:
+        """
+        Check if the ontology version has changed for a specific dataset.
+        """
+        params = {
+            "page": page,
+            "size": size,
+            "order": order
+        }
+        if dataset_id:
+            params["dataset_id"] = dataset_id
+        if topic_id:
+            params["topic_id"] = topic_id
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        url = f"{self.base_ontology_url}/version-changes"
+        return self._get(url, params=params)
+    
+    def get_ontology_version_changes_for_entities(
+        self,
+        version: str = "latest",
+        entity_representation: Optional[str] = None,
+        page: int = 1,
+        size: int = 100,
+        order: str = "asc"
+    ) -> Dict[str, Any]:
+        """
+        Check if the ontology version has changed for a specific entity.
+        """
+        params = {
+            "page": page,
+            "size": size,
+            "order": order
+        }
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        url = f"{self.base_ontology_url}/entities/{version}/changes"
+        return self._get(url, params=params)
