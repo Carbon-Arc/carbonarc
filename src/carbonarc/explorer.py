@@ -347,3 +347,12 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/{endpoint}"
         return self._get(url)
     
+    def get_framework_status(self, framework_id: Union[str, list[str]]) -> dict:
+        """
+        Retrieve status for a specific framework.
+        """
+        endpoint = "framework-status"
+        url = f"{self.base_framework_url}/{endpoint}"
+        params = {"framework_id": framework_id}
+        return self._get(url, params=params)
+    
