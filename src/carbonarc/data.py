@@ -1,7 +1,7 @@
 import os
 import logging
 from io import BytesIO
-from typing import Optional, Literal, Tuple, Union
+from typing import Optional, Literal, Tuple, Union, Dict, Any
 from datetime import datetime
 import base64
 
@@ -95,6 +95,7 @@ class DataAPIClient(BaseAPIClient):
     def get_data_manifest(
         self,
         dataset_id: str,
+        ontology_version: Optional[str] = None,
         drop_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,
         logical_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,
     ) -> dict:
@@ -119,10 +120,19 @@ class DataAPIClient(BaseAPIClient):
         if logical_date:
             params["logical_date_operator"] = logical_date[0]
             params["logical_date"] = logical_date[1]
+            
+        if ontology_version:
+            params["ontology_version"] = ontology_version
         
         return self._get(url, params=params)
     
-    def buy_data(self, dataset_id: str, file_urls: list[str]) -> dict:
+    def buy_data(
+        self, 
+        dataset_id: str, 
+        ontology_version: Optional[str] = None,
+        drop_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,
+        logical_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,
+        file_urls: Optional[list[str]] = None) -> dict:
         """
         Buy data from the Carbon Arc API.
         
@@ -134,8 +144,11 @@ class DataAPIClient(BaseAPIClient):
         """
         endpoint = "data/buy"
         url = f"{self.base_data_url}/{endpoint}"
+        
+        if file_urls:                
+            log.warning("file_urls will be deprecated in carbonarc 1.2.0. Please use ontology_version, drop_date, and logical_date instead.")
 
-        return self._post(url, json={"order": {"dataset_id": dataset_id, "file_urls": file_urls}})
+        return self._post(url, json={"order": {"dataset_id": dataset_id, "ontology_version": ontology_version, "drop_date": drop_date, "logical_date": logical_date, "file_urls": file_urls}})
     
     def download_file(self, file_id: str, directory: str = "./", chunk_size: int = 5 * 1024 * 1024) -> str:
         """
@@ -542,3 +555,29 @@ class DataAPIClient(BaseAPIClient):
         except Exception as e:
             log.error(f"Google Cloud Storage upload failed due to: {str(e)}")
             raise
+
+    def get_library_version_changes(
+        self, 
+        dataset_id: Optional[str] = None,
+        topic_id: Optional[int] = None,
+        entity_representation: Optional[str] = None,
+        page: int = 1,
+        size: int = 100,
+        order: str = "asc"
+    ) -> Dict[str, Any]:
+        """
+        Check if the data library version has changed for a specific dataset.
+        """
+        params = {
+            "page": page,
+            "size": size,
+            "order": order
+        }
+        if dataset_id:
+            params["dataset_id"] = dataset_id
+        if topic_id:
+            params["topic_id"] = topic_id
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        url = f"{self.base_data_url}/data-library/version-changes"
+        return self._get(url, params=params)
