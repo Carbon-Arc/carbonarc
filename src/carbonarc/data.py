@@ -1,7 +1,7 @@
 import os
 import logging
 from io import BytesIO
-from typing import Optional, Literal, Tuple, Union
+from typing import Optional, Literal, Tuple, Union, Dict, Any
 from datetime import datetime
 import base64
 
@@ -555,3 +555,29 @@ class DataAPIClient(BaseAPIClient):
         except Exception as e:
             log.error(f"Google Cloud Storage upload failed due to: {str(e)}")
             raise
+
+    def get_library_version_changes(
+        self, 
+        dataset_id: Optional[str] = None,
+        topic_id: Optional[int] = None,
+        entity_representation: Optional[str] = None,
+        page: int = 1,
+        size: int = 100,
+        order: str = "asc"
+    ) -> Dict[str, Any]:
+        """
+        Check if the data library version has changed for a specific dataset.
+        """
+        params = {
+            "page": page,
+            "size": size,
+            "order": order
+        }
+        if dataset_id:
+            params["dataset_id"] = dataset_id
+        if topic_id:
+            params["topic_id"] = topic_id
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        url = f"{self.base_data_url}/data-library/version-changes"
+        return self._get(url, params=params)
