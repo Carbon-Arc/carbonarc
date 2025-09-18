@@ -104,6 +104,7 @@ class OntologyAPIClient(BaseAPIClient):
 
         Args:
             entity_id: Entity ID.
+            representation: Entity representation code name.
 
         Returns:
             Dictionary with entity information.
@@ -264,6 +265,16 @@ class OntologyAPIClient(BaseAPIClient):
     ) -> Dict[str, Any]:
         """
         Check if the ontology version has changed for a specific entity.
+
+        Args:
+            version: The version to check for changes against.
+            entity_representation: The entity representation to check for changes against.
+            page: The page number to check for changes against.
+            size: The size of the page to check for changes against.
+            order: The order of the query.
+
+        Returns:
+            A dictionary containing the changes in the ontology version.
         """
 
         if page or size or order:
