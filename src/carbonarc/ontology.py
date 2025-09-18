@@ -151,6 +151,7 @@ class OntologyAPIClient(BaseAPIClient):
             "sort_by": sort_by,
             "order": order
         }
+        
         if subject_ids:
             params["subject_ids"] = subject_ids
         if topic_ids:
@@ -165,8 +166,17 @@ class OntologyAPIClient(BaseAPIClient):
             params["entity_domain"] = entity_domain
         if entity:
             params["entity"] = entity
+
         url = f"{self.base_ontology_url}/insights"
-        return self._get(url, params=params)
+        response = self._get(url, params=params)
+
+        for insight in response["items"]:
+            if "sources" in insight:
+                insight.pop("sources")
+            if "blocked" in insight:
+                insight.pop("blocked")
+
+        return response
 
     def get_insight_information(self, insight_id: int) -> dict:
         """
@@ -269,6 +279,6 @@ class OntologyAPIClient(BaseAPIClient):
 
         if entity_representation:
             params["entity_representation"] = entity_representation
-            
+
         url = f"{self.base_ontology_url}/entities/{version.replace('v', '')}/changes"
         return self._get(url, params=params)
