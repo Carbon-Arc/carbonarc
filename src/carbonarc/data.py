@@ -1,3 +1,4 @@
+from optparse import Option
 import os
 import logging
 from io import BytesIO
@@ -558,17 +559,36 @@ class DataAPIClient(BaseAPIClient):
 
     def get_library_version_changes(
         self, 
+        version: str = "latest",
         dataset_id: Optional[str] = None,
         topic_id: Optional[int] = None,
         entity_representation: Optional[str] = None,
-        page: int = 1,
-        size: int = 100,
-        order: str = "asc"
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        order: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Check if the data library version has changed for a specific dataset.
+
+        Args:
+            version: The version to check for changes against.
+            dataset_id: The dataset id to check for changes against.
+            topic_id: The topic id to check for changes against.
+            entity_representation: The entity representation to check for changes against.
+            page: The page number to check for changes against.
+            size: The size of the page to check for changes against.
+            order: The order of the query.
+
+        Returns:
+            A dictionary containing the changes in the data library version.
         """
+        if page or size or order:
+            size = size or 100
+            page = page or 1
+            order = order or "asc"
+
         params = {
+            "version": version.replace("v", ""),
             "page": page,
             "size": size,
             "order": order
@@ -579,5 +599,6 @@ class DataAPIClient(BaseAPIClient):
             params["topic_id"] = topic_id
         if entity_representation:
             params["entity_representation"] = entity_representation
+
         url = f"{self.base_data_url}/data-library/version-changes"
         return self._get(url, params=params)

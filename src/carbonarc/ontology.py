@@ -104,6 +104,7 @@ class OntologyAPIClient(BaseAPIClient):
 
         Args:
             entity_id: Entity ID.
+            representation: Entity representation code name.
 
         Returns:
             Dictionary with entity information.
@@ -151,6 +152,7 @@ class OntologyAPIClient(BaseAPIClient):
             "sort_by": sort_by,
             "order": order
         }
+        
         if subject_ids:
             params["subject_ids"] = subject_ids
         if topic_ids:
@@ -165,8 +167,17 @@ class OntologyAPIClient(BaseAPIClient):
             params["entity_domain"] = entity_domain
         if entity:
             params["entity"] = entity
+
         url = f"{self.base_ontology_url}/insights"
-        return self._get(url, params=params)
+        response = self._get(url, params=params)
+
+        for insight in response["items"]:
+            if "sources" in insight:
+                insight.pop("sources")
+            if "blocked" in insight:
+                insight.pop("blocked")
+
+        return response
 
     def get_insight_information(self, insight_id: int) -> dict:
         """
@@ -236,24 +247,49 @@ class OntologyAPIClient(BaseAPIClient):
         """
         url = f"{self.base_ontology_url}/ontology-tree"
         return self._get(url)
+
+    def get_ontology_versions(self) -> Dict[str, Any]:
+        """
+        Retrieve the available ontology versions.
+        """
+        url = f"{self.base_ontology_url}/ontology-versions"
+        return self._get(url)
     
     def get_ontology_version_changes_for_entities(
         self,
         version: str = "latest",
         entity_representation: Optional[str] = None,
-        page: int = 1,
-        size: int = 100,
-        order: str = "asc"
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        order: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Check if the ontology version has changed for a specific entity.
+
+        Args:
+            version: The version to check for changes against.
+            entity_representation: The entity representation to check for changes against.
+            page: The page number to check for changes against.
+            size: The size of the page to check for changes against.
+            order: The order of the query.
+
+        Returns:
+            A dictionary containing the changes in the ontology version.
         """
+
+        if page or size or order:
+            size = size or 100
+            page = page or 1
+            order = order or "asc"
+
         params = {
             "page": page,
             "size": size,
             "order": order
         }
+
         if entity_representation:
             params["entity_representation"] = entity_representation
-        url = f"{self.base_ontology_url}/entities/{version}/changes"
+
+        url = f"{self.base_ontology_url}/entities/{version.replace('v', '')}/changes"
         return self._get(url, params=params)
