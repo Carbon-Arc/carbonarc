@@ -563,9 +563,9 @@ class DataAPIClient(BaseAPIClient):
         dataset_id: Optional[str] = None,
         topic_id: Optional[int] = None,
         entity_representation: Optional[str] = None,
-        page: Optional[int] = 1,
-        size: Optional[int] = 100,
-        order: Optional[str] = "asc"
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+        order: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Check if the data library version has changed for a specific dataset.
