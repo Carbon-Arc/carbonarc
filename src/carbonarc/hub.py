@@ -44,12 +44,25 @@ class HubAPIClient(BaseAPIClient):
         url = f"{self.base_webcontent_url}/subscribed"
         return self._get(url)
     
+    def get_webcontent_information_by_name(self, webcontent_name: str, page: Optional[int] = None, size: Optional[int] = None) -> dict:
+        """
+        Retrieve a webcontent information by name and optionally with pagination parameters.
+        This includes the webcontent name, webcontent id, description, documentation, and industry information.
+        """
+        url = f"{self.base_webcontent_url}/{webcontent_name}"
+        if page or size:
+            page = page if page else 1
+            size = size if size else 25
+            url += f"?page={page}&size={size}"
+        return self._get(url)
     
-    def get_webcontent_manifest(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,) -> dict:
+    def get_webcontent_data(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,) -> dict:
         """
-        Retrieve a webcontent manifest by id and date.
+        Retrieve a webcontent data by id and date.
+
+        This returns a dictionary containing the feed metadata and the data for the given specifications
         """
-        url = f"{self.base_webcontent_url}/{webcontent_id}/manifest"
+        url = f"{self.base_webcontent_url}/{webcontent_id}/data"
         if webcontent_date:
             params = {
                 "webcontent_date_operator": webcontent_date[0],
@@ -58,35 +71,23 @@ class HubAPIClient(BaseAPIClient):
             return self._get(url, params=params)
         else:
             return self._get(url)
-    
-    def get_webcontent_dataframe(self, webcontent_name: str) -> dict:
+
+    def download_webcontent_file(self, webcontent_id: int, 
+                                 webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None, 
+                                 directory: str = "./",
+                                 filename: Optional[str] = None) -> str:
         """
-        Retrieve a webcontent dataframe by name.
+        Download a webcontent file by webcontent id and date.
         """
-        webcontent_name = webcontent_name.lower()
-        url = f"{self.base_webcontent_url}/{webcontent_name}/dataframe"
-        return self._get(url)
-    
-    def get_webcontent_file(self, file_name: str) -> dict:
-        """
-        Retrieve a webcontent data by file name.
-        """
-        url = f"{self.base_webcontent_url}/file/{file_name}"
-        return self._get(url)
-        
-    def download_webcontent_file(self, file_name: str, directory: str = "./") -> str:
-        """
-        Download a webcontent file by name.
-        """
-        
+
+        data = self.get_webcontent_data(webcontent_id, webcontent_date)
+        file_name = filename if filename else f"{data['webcontent_name']}_{webcontent_date[0]}_{webcontent_date[1]}.json"
         # Get full path of directory and ensure it exists
         output_dir = os.path.abspath(directory)
         os.makedirs(output_dir, exist_ok=True)
-        
-        webcontent = self.get_webcontent_file(file_name)
+        print(f"Uploading file {file_name} to {output_dir}")
+        with open(os.path.join(output_dir, file_name), 'w') as f:
+            json.dump(data, f, indent=2)
 
-        with open(os.path.join(output_dir, file_name.split("/")[-1]), 'w') as f:
-            json.dump(webcontent, f)
-
-        return webcontent
+        return data
 
