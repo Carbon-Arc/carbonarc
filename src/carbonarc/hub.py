@@ -98,6 +98,7 @@ class HubAPIClient(BaseAPIClient):
             url = f"{self.base_webcontent_url}?page={page}&size={size}"
         else:
             url = f"{self.base_webcontent_url}/"
+        print(url)
         return self._get(url)
     
     def get_subscribed_feeds(self) -> dict:
@@ -170,7 +171,7 @@ class HubAPIClient(BaseAPIClient):
             url += f"?page={page}&size={size}"
         return self._get(url)
     
-    def get_webcontent_data(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None,) -> dict:
+    def get_webcontent_data(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None) -> dict:
         """
         Retrieve web content data for a specific feed by ID and optional date filter.
 
@@ -211,14 +212,13 @@ class HubAPIClient(BaseAPIClient):
             restrictions.
         """
         url = f"{self.base_webcontent_url}/{webcontent_id}/data"
+        params = {}
         if webcontent_date:
-            params = {
-                "webcontent_date_operator": webcontent_date[0],
-                "webcontent_date": webcontent_date[1]
-            }
-            return self._get(url, params=params)
-        else:
-            return self._get(url)
+            params['webcontent_date_operator'] = webcontent_date[0]
+            params["webcontent_date"] = webcontent_date[1]
+
+        return self._get(url, params=params)
+
 
     def download_webcontent_file(self, webcontent_id: int, 
                                  webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None, 
