@@ -101,7 +101,7 @@ class HubAPIClient(BaseAPIClient):
             url = f"{self.base_webcontent_url}?page={page}&size={size}"
         else:
             url = f"{self.base_webcontent_url}/"
-        print(url)
+
         return self._get(url)
     
     def get_subscribed_feeds(self) -> dict:
