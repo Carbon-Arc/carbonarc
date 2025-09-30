@@ -51,10 +51,6 @@ class HttpRequestManager:
         )
 
     def get(self, url, **kwargs) -> requests.Response:
-        print(url)
-        val = self.request_session.get(url, auth=self.auth_token, **kwargs)
-        print(val)
-        print(val.json())
         return self._raise_for_status(
             self.request_session.get(url, auth=self.auth_token, **kwargs)
         )
