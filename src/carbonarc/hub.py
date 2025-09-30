@@ -1,12 +1,15 @@
 from typing import Optional, Tuple, Union
 from datetime import datetime
 from typing import Literal
+import logging
 import json
 import os
 
 from carbonarc.utils.client import BaseAPIClient
 PAGE = 1
 SIZE = 25
+logger = logging.getLogger(__name__)
+
 
 class HubAPIClient(BaseAPIClient):
     """
@@ -171,7 +174,7 @@ class HubAPIClient(BaseAPIClient):
             url += f"?page={page}&size={size}"
         return self._get(url)
     
-    def get_webcontent_data(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None) -> dict:
+    def get_webcontent_data(self, webcontent_id: int, webcontent_date: Optional[Tuple[Literal["<", "<=", ">", ">=", "=="], Union[datetime, str]]] = None, page: Optional[int] = None, size: Optional[int] = None, fetch_all=None) -> dict:
         """
         Retrieve web content data for a specific feed by ID and optional date filter.
 
@@ -216,6 +219,15 @@ class HubAPIClient(BaseAPIClient):
         if webcontent_date:
             params['webcontent_date_operator'] = webcontent_date[0]
             params["webcontent_date"] = webcontent_date[1]
+        if fetch_all:
+            if page or size:
+                logger.warning("Page and size are ignored when fetch_all is True")
+            params['fetch_all'] = True
+        else:
+            params['fetch_all'] = False
+            if page or size:
+                params['page'] = page if page else PAGE
+                params['size'] = size if size else SIZE
 
         return self._get(url, params=params)
 
