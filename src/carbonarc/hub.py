@@ -5,6 +5,8 @@ import json
 import os
 
 from carbonarc.utils.client import BaseAPIClient
+PAGE = 1
+SIZE = 25
 
 class HubAPIClient(BaseAPIClient):
     """
@@ -68,7 +70,7 @@ class HubAPIClient(BaseAPIClient):
         self.base_hub_url = self._build_base_url("hub")
         self.base_webcontent_url = self._build_base_url("webcontent")
     
-    def get_webcontent_feeds(self) -> dict:
+    def get_webcontent_feeds(self, page: Optional[int] = None, size: Optional[int] = None) -> dict:
         """
         Retrieve all available web content feeds.
 
@@ -90,7 +92,12 @@ class HubAPIClient(BaseAPIClient):
             >>> for feed in feeds['feeds']:
             ...     print(f"{feed['name']}: {feed['description']}")
         """
-        url = f"{self.base_webcontent_url}"
+        if page or size:
+            page = page if page else PAGE
+            size = size if size else SIZE
+            url = f"{self.base_webcontent_url}?page={page}&size={size}"
+        else:
+            url = f"{self.base_webcontent_url}"
         return self._get(url)
     
     def get_subscribed_feeds(self) -> dict:
