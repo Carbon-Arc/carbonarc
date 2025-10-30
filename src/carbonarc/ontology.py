@@ -192,12 +192,20 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/insights/{insight_id}"
         return self._get(url)
 
-    def get_insights_for_entity(self, entity_id: int) -> dict:
+    def get_insights_for_entity(self, entity_id: int, entity_representation: str=None) -> dict:
         """
         Retrieve insights for a specific entity.
+
+        Args:
+            entity_id: Entity ID.
+            entity_representation: Entity representation code name.
+
+        Returns:
+            Dictionary with insights for the entity.
         """
+        params = {"entity_representation": entity_representation}
         url = f"{self.base_ontology_url}/entity/{entity_id}/insights"
-        return self._get(url)
+        return self._get(url, params=params)
     
     def get_entities_for_insight(self, insight_id: int) -> dict:
         """
