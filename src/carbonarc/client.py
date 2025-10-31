@@ -27,7 +27,7 @@ class PlatformAPIClient(BaseAPIClient):
         """
         Retrieve balance for the current user.
         """
-        url = f"{self.base_platform_url}/me/balance"
+        url = f"{self.base_platform_url}/payments/balance-summary"
         return self._get(url)
     
     def get_usage(self) -> dict:
