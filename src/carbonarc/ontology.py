@@ -232,17 +232,15 @@ class OntologyAPIClient(BaseAPIClient):
         """
         Retrieve insights for a specific subject.
         """
-        raise NotImplementedError("This method is not implemented yet")
-        # url = f"{self.base_ontology_url}/subject/{subject_id}/insights"
-        # return self._get(url)
+        url = f"{self.base_ontology_url}/subject/{subject_id}/insights"
+        return self._get(url)
     
     def get_insights_for_topic(self, topic_id: int) -> dict:
         """
         Retrieve insights for a specific topic.
         """
-        raise NotImplementedError("This method is not implemented yet")
-        # url = f"{self.base_ontology_url}/topic/{topic_id}/insights"
-        # return self._get(url)
+        url = f"{self.base_ontology_url}/topic/{topic_id}/insights"
+        return self._get(url)
         
     def get_ontology_version(self) -> dict:
         """
