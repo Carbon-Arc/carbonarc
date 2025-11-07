@@ -34,8 +34,9 @@ class PlatformAPIClient(BaseAPIClient):
         """
         Retrieve usage for the current user.
         """
-        url = f"{self.base_platform_url}/me/usage"
-        return self._get(url)
+        raise NotImplementedError("Usage is not implemented yet")
+        # url = f"{self.base_platform_url}/me/usage"
+        # return self._get(url)
     
     def get_order_history(self) -> dict:
         """
