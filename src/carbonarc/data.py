@@ -77,6 +77,22 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url, params=params)
 
+    def get_data_sample(self, dataset_id: str, entity_topic_id: Optional[int] = None) -> dict:
+        """
+        Get the data sample for a specific dataset from the Carbon Arc API.
+        
+        Args:
+            dataset_id (str): The identifier of the data to retrieve the data sample for.
+            entity_topic_id (Optional[int]): The identifier of the entity topic to retrieve the data sample for.
+        """
+        endpoint = f"{dataset_id}/data-sample"
+        url = f"{self.base_data_url}/{endpoint}"
+        params = {}
+        if entity_topic_id:
+            params["entity_topic_id"] = entity_topic_id
+
+        return self._get(url, params=params)
+
     def get_graphs(
         self,
     ) -> dict:
