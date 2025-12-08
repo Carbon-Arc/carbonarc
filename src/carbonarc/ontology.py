@@ -48,6 +48,7 @@ class OntologyAPIClient(BaseAPIClient):
         topic_ids: Optional[List[int]] = None,
         insight_types: Optional[List[Literal["metric", "event", "kpi", "marketshare", "cohort"]]] = None,
         insight_id: Optional[int] = None,
+        dataset_ids: Optional[List[int]] = None,
         version: Optional[str] = "latest",
         page: int = 1,
         size: int = 100,
@@ -65,6 +66,7 @@ class OntologyAPIClient(BaseAPIClient):
             topic_ids: List of topic IDs to filter by.
             insight_types: List of insight types to filter by.
             insight_id: Insight ID to filter by.
+            dataset_ids: List of dataset IDs to filter by.
             page: Page number (default 1).
             size: Number of results per page (default 100).
             sort_by: Field to sort by.
@@ -95,6 +97,8 @@ class OntologyAPIClient(BaseAPIClient):
             params["entity"] = entity
         if version:
             params["version"] = version
+        if dataset_ids:
+            params["dataset_ids"] = dataset_ids
         url = f"{self.base_ontology_url}/entities"
         return self._get(url, params=params)
 
