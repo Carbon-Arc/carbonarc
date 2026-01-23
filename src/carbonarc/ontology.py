@@ -174,8 +174,6 @@ class OntologyAPIClient(BaseAPIClient):
         for insight in response["items"]:
             if "sources" in insight:
                 insight.pop("sources")
-            if "blocked" in insight:
-                insight.pop("blocked")
 
         return response
 
