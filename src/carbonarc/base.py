@@ -1,3 +1,4 @@
+from carbonarc.catalog import CatalogAPIClient
 from carbonarc.data import DataAPIClient
 from carbonarc.explorer import ExplorerAPIClient
 from carbonarc.hub import HubAPIClient
@@ -24,6 +25,7 @@ class CarbonArcClient:
             host (str): The base URL of the Carbon Arc API.
             version (str): The API version to use.
         """
+        self.catalog = CatalogAPIClient(token=token, host=host, version=version)
         self.data = DataAPIClient(token=token, host=host, version=version)
         self.explorer = ExplorerAPIClient(token=token, host=host, version=version)
         self.hub = HubAPIClient(token=token, host=host, version=version)
