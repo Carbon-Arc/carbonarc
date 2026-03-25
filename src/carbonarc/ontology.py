@@ -41,6 +41,7 @@ class OntologyAPIClient(BaseAPIClient):
 
     def get_entities(
         self,
+        search: Optional[str] = None,
         representation: Optional[List[str]] = None,
         domain: Optional[Union[str, List[str]]] = None,
         entity: Optional[List[Literal["brand", "company", "people", "location"]]] = None,
@@ -58,6 +59,7 @@ class OntologyAPIClient(BaseAPIClient):
         Retrieve entities with filtering and pagination.
 
         Args:
+            search: Search query to filter entities by.
             entity_representation: List of entity representations to filter by.
             entity_domain: Entity domain(s) to filter by.
             entity: List of entity types to filter by.
@@ -79,6 +81,8 @@ class OntologyAPIClient(BaseAPIClient):
             "sort_by": sort_by,
             "order": order
         }
+        if search:
+            params["search"] = search
         if subject_ids:
             params["subject_ids"] = subject_ids
         if topic_ids:
@@ -115,6 +119,7 @@ class OntologyAPIClient(BaseAPIClient):
 
     def get_insights(
         self,
+        search: Optional[str] = None,
         subject_ids: Optional[List[int]] = None,
         topic_ids: Optional[List[int]] = None,
         insight_types: Optional[List[Literal["metric", "event", "kpi", "marketshare", "cohort"]]] = None,
@@ -131,6 +136,7 @@ class OntologyAPIClient(BaseAPIClient):
         Retrieve insights with filtering and pagination.
 
         Args:
+            search: Search query to filter insights by.
             subject_ids: List of subject IDs to filter by.
             topic_ids: List of topic IDs to filter by.
             insight_types: List of insight types to filter by.
@@ -152,7 +158,8 @@ class OntologyAPIClient(BaseAPIClient):
             "sort_by": sort_by,
             "order": order
         }
-        
+        if search:
+            params["search"] = search
         if subject_ids:
             params["subject_ids"] = subject_ids
         if topic_ids:
