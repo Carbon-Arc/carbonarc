@@ -41,7 +41,6 @@ class OntologyAPIClient(BaseAPIClient):
 
     def get_entities(
         self,
-        search: Optional[str] = None,
         representation: Optional[List[str]] = None,
         domain: Optional[Union[str, List[str]]] = None,
         entity: Optional[List[Literal["brand", "company", "people", "location"]]] = None,
@@ -49,6 +48,7 @@ class OntologyAPIClient(BaseAPIClient):
         topic_ids: Optional[List[int]] = None,
         insight_types: Optional[List[Literal["metric", "event", "kpi", "marketshare", "cohort"]]] = None,
         insight_id: Optional[int] = None,
+        search: Optional[str] = None,
         version: Optional[str] = "latest",
         page: int = 1,
         size: int = 100,
@@ -59,14 +59,15 @@ class OntologyAPIClient(BaseAPIClient):
         Retrieve entities with filtering and pagination.
 
         Args:
-            search: Search query to filter entities by.
-            entity_representation: List of entity representations to filter by.
-            entity_domain: Entity domain(s) to filter by.
+            representation: List of entity representations to filter by.
+            domain: Entity domain(s) to filter by.
             entity: List of entity types to filter by.
             subject_ids: List of subject IDs to filter by.
             topic_ids: List of topic IDs to filter by.
             insight_types: List of insight types to filter by.
             insight_id: Insight ID to filter by.
+            search: Search query to filter entities by.
+            version: Ontology version to use for the query.
             page: Page number (default 1).
             size: Number of results per page (default 100).
             sort_by: Field to sort by.
@@ -119,7 +120,6 @@ class OntologyAPIClient(BaseAPIClient):
 
     def get_insights(
         self,
-        search: Optional[str] = None,
         subject_ids: Optional[List[int]] = None,
         topic_ids: Optional[List[int]] = None,
         insight_types: Optional[List[Literal["metric", "event", "kpi", "marketshare", "cohort"]]] = None,
@@ -127,6 +127,7 @@ class OntologyAPIClient(BaseAPIClient):
         entity_representation: Optional[str] = None,
         entity_domain: Optional[Union[str, List[str]]] = None,
         entity: Optional[Literal["brand", "company", "people", "location"]] = None,
+        search: Optional[str] = None,
         page: int = 1,
         size: int = 100,
         sort_by: str = "insight_label",
@@ -136,7 +137,6 @@ class OntologyAPIClient(BaseAPIClient):
         Retrieve insights with filtering and pagination.
 
         Args:
-            search: Search query to filter insights by.
             subject_ids: List of subject IDs to filter by.
             topic_ids: List of topic IDs to filter by.
             insight_types: List of insight types to filter by.
@@ -144,6 +144,7 @@ class OntologyAPIClient(BaseAPIClient):
             entity_representation: Entity representation to filter by.
             entity_domain: Entity domain(s) to filter by.
             entity: Entity type to filter by.
+            search: Search query to filter insights by.
             page: Page number (default 1).
             size: Number of results per page (default 100).
             sort_by: Field to sort by.
