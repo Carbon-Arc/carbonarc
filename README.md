@@ -23,6 +23,6 @@ client = CarbonArcClient(token="<token>") # retrieve token from account
 ## Resources
 
 - [Tutorials](https://github.com/Carbon-Arc/carbonarc-tutorials)
-- [Docs](https://docs.carbonarc.co/)
+- [Docs](https://docs.carbonarc.ai/)
 - [App](https://app.carbonarc.co/)
 - [API](https://api.carbonarc.co/)
