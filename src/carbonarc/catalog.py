@@ -71,21 +71,6 @@ class CatalogAPIClient(BaseAPIClient):
         """
         return self._get(f"{self.base_catalog_url}/assets/{asset_id}")
 
-    def get_trending(self, limit: int = 20) -> dict:
-        """
-        Get assets sorted by vote count descending.
-
-        Args:
-            limit: Max assets to return (1–100, default 20).
-
-        Returns:
-            List of assets with vote_count field.
-        """
-        return self._get(
-            f"{self.base_catalog_url}/assets/trending",
-            params={"limit": limit},
-        )
-
     def toggle_vote(self, asset_id: str) -> dict:
         """
         Toggle an upvote on an asset (YouTube-style).
