@@ -33,7 +33,7 @@ class BaseAPIClient:
 
     def _build_base_url(
         self,
-        product: Literal["clients", "framework", "library", "ontology", "hub", "webcontent", "dashboard"],
+        product: Literal["catalog", "clients", "framework", "library", "ontology", "hub", "webcontent", "dashboard"],
     ) -> str:
         
         url = f"{self.host.rstrip('/')}/{self.version}/{product}"
