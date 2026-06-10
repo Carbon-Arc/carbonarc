@@ -130,6 +130,19 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url)
 
+    def get_insights_by_dataset(self, dataset_id: str) -> dict:
+        """
+        Retrieve all insights associated with a specific dataset.
+
+        Args:
+            dataset_id: The identifier of the dataset to retrieve insights for.
+
+        Returns:
+            Dictionary containing the insights for the specified dataset.
+        """
+        url = f"{self.base_data_url}/data/{dataset_id}/insights"
+        return self._get(url)
+
     def get_library_version_changes(
         self, 
         version: str = "latest",
