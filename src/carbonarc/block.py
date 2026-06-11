@@ -205,8 +205,8 @@ class BlockAPIClient(BaseAPIClient):
     def __init__(
         self,
         token: str,
-        host: str = "http://localhost:8080",
-        cams_host: str = "http://localhost:8000",
+        host: str = "https://api.carbonarc.co",
+        cams_host: str = "https://app.carbonarc.co",
         version: str = "v2",
     ):
         """All Block functionality is served by the CAMS API
