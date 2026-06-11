@@ -133,7 +133,7 @@ def _reshape_cuts_with_arns(
     def _arn_matches(arn: dict, cut_value, lag_value) -> bool:
         if arn.get("scope") != "block":
             return False
-        if arn.get("dataset_id") != dataset_id:
+        if str(arn.get("dataset_id")) != dataset_id:
             return False
         if (arn.get("cut") or None) != (cut_value or None):
             return False
@@ -471,7 +471,7 @@ class BlockAPIClient(BaseAPIClient):
         catalog_entry = next(
             (
                 d for d in self.list_datasets().get("datasets", [])
-                if d.get("dataset_id") == dataset_id
+                if str(d.get("dataset_id")) == dataset_id
             ),
             None,
         )
