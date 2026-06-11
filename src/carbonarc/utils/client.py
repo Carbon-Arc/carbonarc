@@ -1,4 +1,5 @@
 import logging
+from http import HTTPStatus
 from typing import Literal
 
 from carbonarc.utils.auth import TokenAuth
@@ -47,7 +48,14 @@ class BaseAPIClient:
         return self.request_manager.post(url, **kwargs).json()
 
     def _delete(self, url: str, **kwargs) -> dict:
-        return self.request_manager.delete(url, **kwargs).json()
+        response = self.request_manager.delete(url, **kwargs)
+        # A successful DELETE commonly answers ``204 No Content`` with an
+        # empty body; calling ``.json()`` on that raises a decode error even
+        # though the resource was already deleted. Treat an empty body as an
+        # empty result.
+        if response.status_code == HTTPStatus.NO_CONTENT or not response.content:
+            return {}
+        return response.json()
 
     def _stream(self, url: str, **kwargs):
         return self.request_manager.get(url, **kwargs)
