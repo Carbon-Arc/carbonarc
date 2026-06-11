@@ -93,6 +93,20 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url, params=params)
 
+    def get_dataset_schedule(self, dataset_id: str) -> list:
+        """
+        Get the update schedule for a specific dataset from the Carbon Arc API.
+
+        Args:
+            dataset_id (str): The identifier of the dataset to retrieve the schedule for.
+
+        Returns:
+            list: A list of dictionaries containing schedule information for the specified dataset,
+                  including next_run_start, next_run_end, and last_update fields.
+        """
+        url = f"{self.base_data_url}/schedule/{dataset_id}"
+        return self._get(url)
+
     def get_graphs(
         self,
     ) -> dict:
@@ -128,6 +142,19 @@ class DataAPIClient(BaseAPIClient):
         endpoint = f"graph/{graph_id}/data"
         url = f"{self.base_data_url}/{endpoint}?download_type={download_type}"
 
+        return self._get(url)
+
+    def get_insights_by_dataset(self, dataset_id: str) -> dict:
+        """
+        Retrieve all insights associated with a specific dataset.
+
+        Args:
+            dataset_id: The identifier of the dataset to retrieve insights for.
+
+        Returns:
+            Dictionary containing the insights for the specified dataset.
+        """
+        url = f"{self.base_data_url}/data/{dataset_id}/insights"
         return self._get(url)
 
     def get_library_version_changes(
