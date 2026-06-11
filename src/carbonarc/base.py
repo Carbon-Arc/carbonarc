@@ -1,3 +1,4 @@
+from carbonarc.block import BlockAPIClient
 from carbonarc.catalog import CatalogAPIClient
 from carbonarc.data import DataAPIClient
 from carbonarc.explorer import ExplorerAPIClient
@@ -14,17 +15,29 @@ class CarbonArcClient:
     def __init__(
         self,
         token: str,
-        host: str = "https://api.carbonarc.co",
+        host: str = "http://localhost:8080",
+        cams_host: str = "http://localhost:8000",
         version: str = "v2",
     ):
         """
         Initialize CarbonArcClient with an authentication token and user agent.
-        
+
         Args:
             token (str): The authentication token to be used for requests.
-            host (str): The base URL of the Carbon Arc API.
-            version (str): The API version to use.
+            host (str): Base URL of the data API (power-api). Hosts
+                ``/v2/*`` routes — data library, catalog, ontology, hub,
+                explorer, platform/billing.
+            cams_host (str): Base URL of the admin/auth API (CAMS). Hosts
+                ``/api/v1/*`` routes — all of Block (dataset discovery,
+                request lifecycle, pre-approvals, S3 ARN management,
+                Polaris credential rotation). Used only by
+                :class:`BlockAPIClient`. The two backends live on separate
+                hostnames in every environment (prod, stage, dev, local).
+            version (str): The data-API version to use.
         """
+        self.block = BlockAPIClient(
+            token=token, host=host, cams_host=cams_host, version=version
+        )
         self.catalog = CatalogAPIClient(token=token, host=host, version=version)
         self.data = DataAPIClient(token=token, host=host, version=version)
         self.explorer = ExplorerAPIClient(token=token, host=host, version=version)

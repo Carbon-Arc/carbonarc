@@ -13,6 +13,13 @@ class AuthenticationError(CarbonArcException):
     pass
 
 
+class ForbiddenError(CarbonArcException):
+    """Raised when the caller is authenticated but lacks the role/plan
+    needed for the operation (HTTP 403). Distinct from
+    :class:`AuthenticationError` (the token itself is invalid)."""
+    pass
+
+
 class NotFoundError(CarbonArcException):
     """Raised when a resource is not found."""
     pass

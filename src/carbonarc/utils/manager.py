@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from requests.auth import AuthBase
 
 from carbonarc import __version__
-from carbonarc.utils.exceptions import AuthenticationError
+from carbonarc.utils.exceptions import AuthenticationError, ForbiddenError
 
 
 class HttpRequestManager:
@@ -77,6 +77,19 @@ class HttpRequestManager:
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == HTTPStatus.CONFLICT:
                 raise AuthenticationError("Conflict error")
+            if e.response.status_code == HTTPStatus.FORBIDDEN:
+                detail: str | None = None
+                try:
+                    body = e.response.json()
+                    if isinstance(body, dict):
+                        detail = body.get("detail")
+                except ValueError:
+                    pass
+                raise ForbiddenError(
+                    detail or "Forbidden",
+                    status_code=e.response.status_code,
+                    response=e.response,
+                ) from e
             if not bool(BeautifulSoup(e.response.text, "html.parser").find()):
                 self._logger.error(e.response.text)
             else:
