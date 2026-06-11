@@ -33,7 +33,7 @@ def _lag_to_days(lag) -> Optional[int]:
       - ``int`` passthrough (idempotent)
     """
     if lag is None:
-        return None
+        return 0
     if isinstance(lag, int):
         return lag
     s = str(lag).strip()
@@ -481,7 +481,7 @@ class BlockAPIClient(BaseAPIClient):
         # registered ARNs attached. ARNs are per-(dataset_id, cut, lag),
         # so the SKU axis is the natural place to surface them.
         if catalog_entry is not None:
-            all_arns = self.list_arns().get("items", [])
+            all_arns = self.list_arns().get("items", []) or []
             cuts = catalog_entry.get("cuts") or []
             reshaped_cuts = _reshape_cuts_with_arns(cuts, dataset_id, all_arns)
             # Strip the redundant ``dataset_id`` and the freeform ``lag``
@@ -567,7 +567,7 @@ class BlockAPIClient(BaseAPIClient):
         # ``requests`` for the public SDK surface.
         response["requests"] = [
             _absolutize_tear_sheet(r, self._cams_host)
-            for r in response.pop("items", [])
+            for r in (response.pop("items", None) or [])
         ]
         return response
 
