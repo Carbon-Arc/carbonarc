@@ -34,7 +34,8 @@ class ExplorerAPIClient(BaseAPIClient):
         entities: Union[List[Dict], Dict, str],
         insight: int,
         filters: Dict[str, Any],
-        aggregate: Optional[Literal["sum", "mean"]] = None
+        aggregate: Optional[Literal["sum", "mean"]] = None,
+        events: Optional[List[Dict]] = None,
     ) -> dict:
         """
         Build a framework payload for the API.
@@ -44,16 +45,24 @@ class ExplorerAPIClient(BaseAPIClient):
             insight: Insight ID.
             filters: Filters to apply.
             aggregate: Aggregation method ("sum" or "mean").
+            events: Optional list of event dicts, each with ``"event_id"`` (int)
+                and ``"representation"`` (str, e.g. ``"entityeventp"``).
+                Use ``client.ontology.get_event_types()`` to browse available
+                representations and ``client.ontology.get_events()`` to find
+                specific event IDs.
 
         Returns:
             Framework dictionary.
         """
-        return {
+        framework: Dict[str, Any] = {
             "entities": self._clean_entities(entities),
             "insight": self._clean_insight(insight),
             "filters": filters,
-            "aggregate": aggregate
+            "aggregate": aggregate,
         }
+        if events is not None:
+            framework["events"] = events
+        return framework
 
     def _validate_framework(self, framework: dict):
         """
@@ -88,7 +97,19 @@ class ExplorerAPIClient(BaseAPIClient):
             raise InvalidConfigurationError("Insight must be a dictionary.")
         if "insight_id" not in framework["insight"]:
             raise InvalidConfigurationError("Insight must have an 'insight_id' key.")
-        
+
+        if "events" in framework and framework["events"] is not None:
+            events = framework["events"]
+            if not isinstance(events, list):
+                raise InvalidConfigurationError("Events must be a list of dicts.")
+            for event in events:
+                if not isinstance(event, dict):
+                    raise InvalidConfigurationError("Each event must be a dictionary.")
+                if "event_id" not in event:
+                    raise InvalidConfigurationError("Each event must have an 'event_id' key.")
+                if "representation" not in event:
+                    raise InvalidConfigurationError("Each event must have a 'representation' key.")
+
         return framework
         
     @staticmethod

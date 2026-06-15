@@ -48,6 +48,8 @@ class OntologyAPIClient(BaseAPIClient):
         topic_ids: Optional[List[int]] = None,
         insight_types: Optional[List[Literal["metric", "event", "kpi", "marketshare", "cohort"]]] = None,
         insight_id: Optional[int] = None,
+        event_id: Optional[int] = None,
+        event_representation: Optional[str] = None,
         search: Optional[str] = None,
         version: Optional[str] = "latest",
         page: int = 1,
@@ -66,6 +68,9 @@ class OntologyAPIClient(BaseAPIClient):
             topic_ids: List of topic IDs to filter by.
             insight_types: List of insight types to filter by.
             insight_id: Insight ID to filter by.
+            event_id: Filter entities linked to this event ID.
+            event_representation: Event representation to use with ``event_id``
+                (e.g. ``"entityeventp"``).
             search: Search query to filter entities by.
             version: Ontology version to use for the query.
             page: Page number (default 1).
@@ -92,6 +97,10 @@ class OntologyAPIClient(BaseAPIClient):
             params["insight_types"] = insight_types
         if insight_id:
             params["insight_id"] = insight_id
+        if event_id:
+            params["event_id"] = event_id
+        if event_representation:
+            params["event_representation"] = event_representation
         if representation:
             params["entity_representation"] = representation
         if domain:
@@ -127,6 +136,8 @@ class OntologyAPIClient(BaseAPIClient):
         entity_representation: Optional[str] = None,
         entity_domain: Optional[Union[str, List[str]]] = None,
         entity: Optional[Literal["brand", "company", "people", "location"]] = None,
+        event_id: Optional[int] = None,
+        event_representation: Optional[str] = None,
         search: Optional[str] = None,
         page: int = 1,
         size: int = 100,
@@ -144,6 +155,9 @@ class OntologyAPIClient(BaseAPIClient):
             entity_representation: Entity representation to filter by.
             entity_domain: Entity domain(s) to filter by.
             entity: Entity type to filter by.
+            event_id: Filter insights linked to this event ID.
+            event_representation: Event representation to use with ``event_id``
+                (e.g. ``"entityeventp"``).
             search: Search query to filter insights by.
             page: Page number (default 1).
             size: Number of results per page (default 100).
@@ -175,6 +189,10 @@ class OntologyAPIClient(BaseAPIClient):
             params["entity_domain"] = entity_domain
         if entity:
             params["entity"] = entity
+        if event_id:
+            params["event_id"] = event_id
+        if event_representation:
+            params["event_representation"] = event_representation
 
         url = f"{self.base_ontology_url}/insights"
         response = self._get(url, params=params)
@@ -269,6 +287,59 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/ontology-versions"
         return self._get(url)
     
+    def get_event_types(self) -> dict:
+        """
+        Retrieve available event types and their representations.
+
+        Returns:
+            Dictionary containing event types and their representation names.
+        """
+        url = f"{self.base_ontology_url}/event-types"
+        return self._get(url)
+
+    def get_events(
+        self,
+        insight_id: Optional[int] = None,
+        entity_id: Optional[int] = None,
+        entity_representation: Optional[str] = None,
+        search: Optional[str] = None,
+        min_score: Optional[float] = None,
+        page: int = 1,
+        size: int = 100,
+    ) -> dict:
+        """
+        Retrieve event entities, optionally filtered by insight, entity, or search query.
+
+        When ``search`` is provided the results are ranked by vector similarity
+        against the query; use ``min_score`` to control the relevance threshold.
+
+        Args:
+            insight_id: Filter events by insight ID.
+            entity_id: Filter events by entity ID.
+            entity_representation: Filter events by representation (e.g. ``"entityeventp"``).
+                Use :meth:`get_event_types` to see available representations.
+            search: Keyword query for vector-based event search.
+            min_score: Minimum similarity score when using ``search`` (0–1).
+            page: Page number (default 1).
+            size: Number of results per page (default 100).
+
+        Returns:
+            Dictionary containing paginated event entities.
+        """
+        params: Dict[str, Any] = {"page": page, "size": size}
+        if insight_id:
+            params["insight_id"] = insight_id
+        if entity_id:
+            params["entity_id"] = entity_id
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        if search:
+            params["search"] = search
+        if min_score is not None:
+            params["min_score"] = min_score
+        url = f"{self.base_ontology_url}/events"
+        return self._get(url, params=params)
+
     def get_ontology_version_changes_for_entities(
         self,
         version: str = "latest",
