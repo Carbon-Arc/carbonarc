@@ -31,9 +31,9 @@ class ExplorerAPIClient(BaseAPIClient):
 
     def build_framework(
         self,
+        entities: Optional[Union[List[Dict], Dict, str]],
         insight: int,
         filters: Dict[str, Any],
-        entities: Optional[Union[List[Dict], Dict, str]] = None,
         aggregate: Optional[Literal["sum", "mean"]] = None,
         events: Optional[List[Dict]] = None,
     ) -> dict:
@@ -113,10 +113,13 @@ class ExplorerAPIClient(BaseAPIClient):
         return framework
         
     @staticmethod
-    def _clean_entities(entities: Union[List[Dict], Dict, str]) -> Union[List[Dict], Dict]:
+    def _clean_entities(entities: Optional[Union[List[Dict], Dict, str]]) -> Union[List[Dict], Dict]:
         """
         Clean the entities list.
         """
+        if entities is None:
+            return []
+
         if isinstance(entities, str):
             return {"carc_name": "*", "representation": entities}
         
