@@ -62,7 +62,7 @@ class ExplorerAPIClient(BaseAPIClient):
             "aggregate": aggregate,
         }
         if events is not None:
-            framework["events"] = events
+            framework["events"] = self._clean_events(events)
         return framework
 
     def _validate_framework(self, framework: dict):
@@ -115,6 +115,18 @@ class ExplorerAPIClient(BaseAPIClient):
 
         return framework
         
+    @staticmethod
+    def _clean_events(events: Optional[List[Dict]]) -> Optional[List[Dict]]:
+        """
+        Clean the events list, coercing event_id to str as required by the API.
+        """
+        if not events:
+            return events
+        return [
+            {**event, "event_id": str(event["event_id"])} if "event_id" in event else event
+            for event in events
+        ]
+
     @staticmethod
     def _clean_entities(entities: Optional[Union[List[Dict], Dict, str]]) -> Union[List[Dict], Dict]:
         """
