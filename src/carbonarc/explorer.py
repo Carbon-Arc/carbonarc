@@ -104,8 +104,8 @@ class ExplorerAPIClient(BaseAPIClient):
             for event in events:
                 if not isinstance(event, dict):
                     raise InvalidConfigurationError("Each event must be a dictionary.")
-                if "event_id" not in event:
-                    raise InvalidConfigurationError("Each event must have an 'event_id' key.")
+                if "event_id" not in event or event["event_id"] is None:
+                    raise InvalidConfigurationError("Each event must have a non-null 'event_id'.")
                 if "representation" not in event:
                     raise InvalidConfigurationError("Each event must have a 'representation' key.")
 
@@ -124,7 +124,7 @@ class ExplorerAPIClient(BaseAPIClient):
         if not events:
             return events
         return [
-            {**event, "event_id": str(event["event_id"])} if "event_id" in event else event
+            {**event, "event_id": str(event["event_id"])} if "event_id" in event and event["event_id"] is not None else event
             for event in events
         ]
 
