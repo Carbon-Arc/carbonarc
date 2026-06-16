@@ -31,9 +31,9 @@ class ExplorerAPIClient(BaseAPIClient):
 
     def build_framework(
         self,
-        entities: Optional[Union[List[Dict], Dict, str]],
         insight: int,
         filters: Dict[str, Any],
+        entities: Optional[Union[List[Dict], Dict, str]] = None,
         aggregate: Optional[Literal["sum", "mean"]] = None,
         events: Optional[List[Dict]] = None,
     ) -> dict:
@@ -41,9 +41,10 @@ class ExplorerAPIClient(BaseAPIClient):
         Build a framework payload for the API.
 
         Args:
-            entities: List of entity dicts (with "carc_id" and "representation") or a representation string.
             insight: Insight ID.
             filters: Filters to apply.
+            entities: List of entity dicts (with "carc_id" and "representation") or a
+                representation string. Optional when ``events`` are provided (event-only query).
             aggregate: Aggregation method ("sum" or "mean").
             events: Optional list of event dicts, each with ``"event_id"`` (int)
                 and ``"representation"`` (str, e.g. ``"entityeventp"``).
