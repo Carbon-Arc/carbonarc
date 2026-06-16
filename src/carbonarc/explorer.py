@@ -76,13 +76,10 @@ class ExplorerAPIClient(BaseAPIClient):
             InvalidConfigurationError: If the framework is invalid.
         """
         
-        framework["entities"] = self._clean_entities(framework["entities"])
-        framework["insight"] = self._clean_insight(framework["insight"])
-        
         if not isinstance(framework, dict):
             raise InvalidConfigurationError("Framework must be a dictionary. Use build_framework().")
-        if "entities" not in framework:
-            raise InvalidConfigurationError("Framework must have an 'entities' key.")
+        framework["entities"] = self._clean_entities(framework.get("entities"))
+        framework["insight"] = self._clean_insight(framework["insight"])
         entities = framework["entities"]
         if isinstance(entities, list):
             if not all(isinstance(entity, dict) for entity in entities):
