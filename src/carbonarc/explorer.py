@@ -31,9 +31,9 @@ class ExplorerAPIClient(BaseAPIClient):
 
     def build_framework(
         self,
-        entities: Union[List[Dict], Dict, str],
         insight: int,
         filters: Dict[str, Any],
+        entities: Optional[Union[List[Dict], Dict, str]] = None,
         aggregate: Optional[Literal["sum", "mean"]] = None,
         events: Optional[List[Dict]] = None,
     ) -> dict:
