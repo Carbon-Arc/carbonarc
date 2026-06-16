@@ -111,6 +111,11 @@ class ExplorerAPIClient(BaseAPIClient):
                 if "representation" not in event:
                     raise InvalidConfigurationError("Each event must have a 'representation' key.")
 
+        has_entities = bool(entities) if isinstance(entities, list) else entities is not None
+        has_events = bool(framework.get("events"))
+        if not has_entities and not has_events:
+            raise InvalidConfigurationError("Framework must have at least one entity or event.")
+
         return framework
         
     @staticmethod
