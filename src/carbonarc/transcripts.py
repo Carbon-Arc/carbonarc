@@ -6,9 +6,9 @@ from carbonarc.utils.client import BaseAPIClient
 class TranscriptAPIClient(BaseAPIClient):
     """Client for the Carbon Arc Transcripts API.
 
-    Transcripts are expert interview recordings, delivered in three tiers:
-    raw, intelligence, and AI-RAG. Use this client to browse available
-    transcripts, purchase individual ones, and download the purchased files.
+    Provides access to expert interview transcripts. Use this client to browse
+    available transcripts, purchase individual ones, and download the purchased
+    files.
 
     Access is gated by client entitlement — contact Carbon Arc to enable
     Transcripts for your account.
@@ -20,36 +20,52 @@ class TranscriptAPIClient(BaseAPIClient):
 
     def list_transcripts(
         self,
+        ticker: Optional[str] = None,
+        entity: Optional[str] = None,
         transcript_type: Optional[str] = None,
         region: Optional[str] = None,
+        search: Optional[str] = None,
         interview_date_from: Optional[str] = None,
         interview_date_to: Optional[str] = None,
+        sort_by: str = "published_at",
+        order: str = "desc",
+        page: int = 1,
+        size: int = 20,
     ) -> dict:
         """List available transcripts for your account.
 
-        Returns transcripts your client is entitled to browse, ordered by
-        publish date descending. Each item includes an ``is_purchased`` flag
-        indicating whether the calling user has already purchased it.
+        Returns transcripts your client is entitled to browse. Each item
+        includes an ``is_purchased`` flag indicating whether the calling user
+        has already purchased it.
 
         Args:
+            ticker: Filter by ticker symbol (entity label).
+            entity: Filter by any entity label.
             transcript_type: Filter by transcript type (e.g. ``"expert_interview"``).
             region: Filter by region (e.g. ``"North America"``).
+            search: Search in title and description.
             interview_date_from: ISO date string lower bound, inclusive (e.g. ``"2024-01-01"``).
             interview_date_to: ISO date string upper bound, inclusive (e.g. ``"2024-12-31"``).
+            sort_by: Sort field — ``"published_at"`` (default), ``"title"``, or ``"interview_date"``.
+            order: Sort direction — ``"desc"`` (default) or ``"asc"``.
+            page: Page number, 1-indexed (default ``1``).
+            size: Page size, 1–100 (default ``20``).
 
         Returns:
-            Dict with ``transcripts`` (list) and ``total`` (int).
+            Dict with ``transcripts`` (list), ``total`` (int), ``page`` (int), and ``size`` (int).
         """
-        params = {
-            k: v
-            for k, v in {
-                "transcript_type": transcript_type,
-                "region": region,
-                "interview_date_from": interview_date_from,
-                "interview_date_to": interview_date_to,
-            }.items()
-            if v is not None
-        }
+        params: dict = {"sort_by": sort_by, "order": order, "page": page, "size": size}
+        for key, val in {
+            "ticker": ticker,
+            "entity": entity,
+            "transcript_type": transcript_type,
+            "region": region,
+            "search": search,
+            "interview_date_from": interview_date_from,
+            "interview_date_to": interview_date_to,
+        }.items():
+            if val is not None:
+                params[key] = val
         return self._get(self._base_url, params=params)
 
     def get_transcript(self, transcript_id: str) -> dict:
