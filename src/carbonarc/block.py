@@ -644,3 +644,24 @@ class BlockAPIClient(BaseAPIClient):
     def deregister_arn(self, arn_id: str) -> dict:
         """Deregister a previously-registered ARN."""
         return self._delete(f"{self._v1_url}/arns/{arn_id}")
+
+    # ---- Polaris credential rotation ----------------------------------------
+
+    def rotate_polaris_credentials(self) -> dict:
+        """Rotate the caller's Polaris (Iceberg REST Catalog) client
+        credentials.
+
+        Mints a fresh ``client_id`` / ``client_secret`` for the client's
+        existing Polaris principal and invalidates the previous pair
+        server-side. The returned ``client_secret`` is the only chance to
+        capture the new value — update any query engine connected via Polaris
+        (Snowflake, ClickHouse, …) with the new pair, or it will lose access.
+
+        Gated like the rest of the Block surface: an enterprise client whose
+        token carries a Block role.
+
+        Returns:
+            Dict with ``principal_name`` (may be ``None``), ``client_id``, and
+            ``client_secret``.
+        """
+        return self._post(f"{self._v1_url}/polaris/rotate-credentials")
