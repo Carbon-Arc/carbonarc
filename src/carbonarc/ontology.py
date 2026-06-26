@@ -297,6 +297,42 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/event-types"
         return self._get(url)
 
+    def get_event_categories(
+        self,
+        event_type: Optional[str] = None,
+        insight_id: Optional[int] = None,
+        entity_id: Optional[int] = None,
+        entity_representation: Optional[str] = None,
+    ) -> dict:
+        """
+        Retrieve event categories grouped by event type.
+
+        When ``insight_id`` or ``entity_id`` + ``entity_representation`` are
+        provided, only categories present in that filtered context are returned.
+
+        Args:
+            event_type: Filter to a specific event type (e.g. ``"Corporate Events"``).
+            insight_id: Filter categories to those linked to this insight ID.
+            entity_id: Filter categories to those linked to this entity ID.
+            entity_representation: Required when ``entity_id`` is provided.
+
+        Returns:
+            Dictionary with an ``items`` list of category groups, each containing
+            ``event_type``, ``categories`` (list of ``{name, id}``), and
+            ``skip_parent_event`` (bool).
+        """
+        params: Dict[str, Any] = {}
+        if event_type:
+            params["event_type"] = event_type
+        if insight_id:
+            params["insight_id"] = insight_id
+        if entity_id:
+            params["entity_id"] = entity_id
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        url = f"{self.base_ontology_url}/event-categories"
+        return self._get(url, params=params)
+
     def get_events(
         self,
         insight_id: Optional[int] = None,
