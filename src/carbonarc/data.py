@@ -55,7 +55,60 @@ class DataAPIClient(BaseAPIClient):
         url = f"{self.base_data_url}/{endpoint}"
 
         return self._get(url)
-    
+
+    def get_tearsheet_pdf(self, dataset_id: str) -> bytes:
+        """
+        Retrieve the tearsheet PDF for a specific dataset as raw bytes.
+
+        Args:
+            dataset_id (str): The identifier of the dataset to retrieve the tearsheet PDF for.
+
+        Returns:
+            bytes: The raw PDF content of the dataset's tearsheet.
+
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails, e.g. a 404
+                when the dataset id does not exist or a 401 when the
+                authentication token is missing or invalid.
+        """
+        endpoint = f"data/{dataset_id}/tearsheet-pdf"
+        url = f"{self.base_data_url}/{endpoint}"
+
+        return self._stream(url).content
+
+    def download_tearsheet_pdf(self, dataset_id: str, directory: Optional[str] = None) -> str:
+        """
+        Download the tearsheet PDF for a specific dataset to a local file.
+
+        The file is written as ``tearsheet_{dataset_id}.pdf`` in the target
+        directory, which is created if it does not already exist. An existing
+        file at the same path is overwritten.
+
+        Args:
+            dataset_id (str): The identifier of the dataset to download the tearsheet PDF for.
+            directory (Optional[str]): The directory where the file should be saved.
+                Defaults to the current directory when not provided. The directory
+                will be created if it doesn't exist.
+
+        Returns:
+            str: The absolute path to the written PDF file.
+
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails, e.g. a 404
+                when the dataset id does not exist or a 401 when the
+                authentication token is missing or invalid.
+            OSError: If there are file system errors (permissions, disk space, etc.).
+        """
+        pdf_bytes = self.get_tearsheet_pdf(dataset_id)
+        file_name = f"tearsheet_{dataset_id}.pdf"
+        output_dir = os.path.abspath(directory if directory is not None else ".")
+        os.makedirs(output_dir, exist_ok=True)
+        file_path = os.path.join(output_dir, file_name)
+        with open(file_path, "wb") as f:
+            f.write(pdf_bytes)
+
+        return file_path
+
     def get_data_dictionary(self, 
                             dataset_id: str,
                             entity_topic_id: Optional[int] = None) -> dict:
