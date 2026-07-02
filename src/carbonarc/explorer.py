@@ -34,7 +34,7 @@ class ExplorerAPIClient(BaseAPIClient):
         entities: Union[List[Dict], Dict, str],
         insight: int,
         filters: Dict[str, Any],
-        aggregate: Optional[Literal["sum", "mean"]] = None
+        aggregate: Optional[Literal["sum", "mean", "count_distinct"]] = None
     ) -> dict:
         """
         Build a framework payload for the API.
@@ -43,7 +43,7 @@ class ExplorerAPIClient(BaseAPIClient):
             entities: List of entity dicts (with "carc_id" and "representation") or a representation string.
             insight: Insight ID.
             filters: Filters to apply.
-            aggregate: Aggregation method ("sum" or "mean").
+            aggregate: Aggregation method ("sum", "mean", or "count_distinct").
 
         Returns:
             Framework dictionary.
