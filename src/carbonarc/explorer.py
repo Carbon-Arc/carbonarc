@@ -104,10 +104,10 @@ class ExplorerAPIClient(BaseAPIClient):
             raise InvalidConfigurationError("Insight must have an 'insight_id' key.")
 
         if "events" in framework and framework["events"] is not None:
+            if not isinstance(framework["events"], list):
+                raise InvalidConfigurationError("Events must be a list of dicts.")
             framework["events"] = self._clean_events(framework["events"])
             events = framework["events"]
-            if not isinstance(events, list):
-                raise InvalidConfigurationError("Events must be a list of dicts.")
             for event in events:
                 if not isinstance(event, dict):
                     raise InvalidConfigurationError("Each event must be a dictionary.")
