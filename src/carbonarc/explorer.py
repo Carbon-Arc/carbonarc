@@ -35,6 +35,7 @@ class ExplorerAPIClient(BaseAPIClient):
         insight: int,
         filters: Dict[str, Any],
         aggregate: Optional[Literal["sum", "mean"]] = None,
+        *,
         events: Optional[List[Dict]] = None,
     ) -> dict:
         """
@@ -61,6 +62,12 @@ class ExplorerAPIClient(BaseAPIClient):
                 f"insight must be an int, str, or dict (got {type(insight).__name__}). "
                 "build_framework(entities, insight, filters, aggregate=None, events=None) — "
                 "check your argument order."
+            )
+        if aggregate is not None and aggregate not in ("sum", "mean"):
+            raise InvalidConfigurationError(
+                f"aggregate must be 'sum', 'mean', or None (got {aggregate!r}). "
+                "events is a keyword-only argument — pass it as events=... rather "
+                "than positionally, e.g. build_framework(entities, insight, filters, events=my_events)."
             )
         framework: Dict[str, Any] = {
             "entities": self._clean_entities(entities),
