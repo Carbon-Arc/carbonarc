@@ -199,7 +199,7 @@ class BlockAPIClient(BaseAPIClient):
     """
     A client for Carbon Arc Block functionality:
     dataset discovery, trial-access request lifecycle, dataset pre-approvals,
-    and S3 ARN management.
+    S3 ARN management, and Polaris credential rotation.
     """
 
     def __init__(
@@ -644,3 +644,20 @@ class BlockAPIClient(BaseAPIClient):
     def deregister_arn(self, arn_id: str) -> dict:
         """Deregister a previously-registered ARN."""
         return self._delete(f"{self._v1_url}/arns/{arn_id}")
+
+    # ---- Polaris query-engine credentials -----------------------------------
+
+    def rotate_polaris_credentials(self) -> dict:
+        """Rotate the caller's Polaris (Iceberg REST Catalog) client
+        credentials.
+
+        Mints a fresh ``client_id`` / ``client_secret`` for the client's
+        existing Polaris principal and invalidates the previous pair
+        server-side. The returned secret is the only chance to capture it —
+        store it somewhere safe before discarding the response.
+
+        Returns:
+            Dict with ``principal_name``, ``client_id``, and
+            ``client_secret``.
+        """
+        return self._post(f"{self._v1_url}/polaris/rotate-credentials")
