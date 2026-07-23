@@ -31,29 +31,53 @@ class ExplorerAPIClient(BaseAPIClient):
 
     def build_framework(
         self,
-        entities: Union[List[Dict], Dict, str],
+        entities: Optional[Union[List[Dict], Dict, str]],
         insight: int,
         filters: Dict[str, Any],
-        aggregate: Optional[Literal["sum", "mean"]] = None
+        aggregate: Optional[Literal["sum", "mean"]] = None,
+        *,
+        events: Optional[List[Dict]] = None,
     ) -> dict:
         """
         Build a framework payload for the API.
 
         Args:
-            entities: List of entity dicts (with "carc_id" and "representation") or a representation string.
+            entities: List of entity dicts (with "carc_id" and "representation") or a
+                representation string. Pass ``None`` for an event-only query (see
+                ``events``).
             insight: Insight ID.
             filters: Filters to apply.
             aggregate: Aggregation method ("sum" or "mean").
+            events: Optional list of event dicts, each with ``"event_id"`` (int)
+                and ``"representation"`` (str, e.g. ``"entityeventp"``).
+                Use ``client.ontology.get_event_types()`` to browse available
+                representations and ``client.ontology.get_events()`` to find
+                specific event IDs.
 
         Returns:
             Framework dictionary.
         """
-        return {
+        if not isinstance(insight, (int, str, dict)):
+            raise InvalidConfigurationError(
+                f"insight must be an int, str, or dict (got {type(insight).__name__}). "
+                "build_framework(entities, insight, filters, aggregate=None, events=None) — "
+                "check your argument order."
+            )
+        if aggregate is not None and aggregate not in ("sum", "mean"):
+            raise InvalidConfigurationError(
+                f"aggregate must be 'sum', 'mean', or None (got {aggregate!r}). "
+                "events is a keyword-only argument — pass it as events=... rather "
+                "than positionally, e.g. build_framework(entities, insight, filters, events=my_events)."
+            )
+        framework: Dict[str, Any] = {
             "entities": self._clean_entities(entities),
             "insight": self._clean_insight(insight),
             "filters": filters,
-            "aggregate": aggregate
+            "aggregate": aggregate,
         }
+        if events is not None:
+            framework["events"] = self._clean_events(events)
+        return framework
 
     def _validate_framework(self, framework: dict):
         """
@@ -66,13 +90,10 @@ class ExplorerAPIClient(BaseAPIClient):
             InvalidConfigurationError: If the framework is invalid.
         """
         
-        framework["entities"] = self._clean_entities(framework["entities"])
-        framework["insight"] = self._clean_insight(framework["insight"])
-        
         if not isinstance(framework, dict):
             raise InvalidConfigurationError("Framework must be a dictionary. Use build_framework().")
-        if "entities" not in framework:
-            raise InvalidConfigurationError("Framework must have an 'entities' key.")
+        framework["entities"] = self._clean_entities(framework.get("entities"))
+        framework["insight"] = self._clean_insight(framework["insight"])
         entities = framework["entities"]
         if isinstance(entities, list):
             if not all(isinstance(entity, dict) for entity in entities):
@@ -88,14 +109,51 @@ class ExplorerAPIClient(BaseAPIClient):
             raise InvalidConfigurationError("Insight must be a dictionary.")
         if "insight_id" not in framework["insight"]:
             raise InvalidConfigurationError("Insight must have an 'insight_id' key.")
-        
+
+        if "events" in framework and framework["events"] is not None:
+            if not isinstance(framework["events"], list):
+                raise InvalidConfigurationError("Events must be a list of dicts.")
+            framework["events"] = self._clean_events(framework["events"])
+            events = framework["events"]
+            for event in events:
+                if not isinstance(event, dict):
+                    raise InvalidConfigurationError("Each event must be a dictionary.")
+                has_event_id = event.get("event_id") is not None
+                has_event_category_id = event.get("event_category_id") is not None
+                if not has_event_id and not has_event_category_id:
+                    raise InvalidConfigurationError(
+                        "Each event must have a non-null 'event_id' or 'event_category_id'."
+                    )
+                if "representation" not in event:
+                    raise InvalidConfigurationError("Each event must have a 'representation' key.")
+
+        has_entities = bool(entities) if isinstance(entities, list) else entities is not None
+        has_events = bool(framework.get("events"))
+        if not has_entities and not has_events:
+            raise InvalidConfigurationError("Framework must have at least one entity or event.")
+
         return framework
         
     @staticmethod
-    def _clean_entities(entities: Union[List[Dict], Dict, str]) -> Union[List[Dict], Dict]:
+    def _clean_events(events: Optional[List[Dict]]) -> Optional[List[Dict]]:
+        """
+        Clean the events list, coercing event_id to str as required by the API.
+        """
+        if not events:
+            return events
+        return [
+            {**event, "event_id": str(event["event_id"])} if "event_id" in event and event["event_id"] is not None else event
+            for event in events
+        ]
+
+    @staticmethod
+    def _clean_entities(entities: Optional[Union[List[Dict], Dict, str]]) -> Union[List[Dict], Dict]:
         """
         Clean the entities list.
         """
+        if entities is None:
+            return []
+
         if isinstance(entities, str):
             return {"carc_name": "*", "representation": entities}
         
