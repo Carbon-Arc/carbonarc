@@ -34,7 +34,7 @@ class ExplorerAPIClient(BaseAPIClient):
         entities: Optional[Union[List[Dict], Dict, str]],
         insight: int,
         filters: Dict[str, Any],
-        aggregate: Optional[Literal["sum", "mean"]] = None,
+        aggregate: Optional[Literal["sum", "mean", "count_distinct"]] = None,
         *,
         events: Optional[List[Dict]] = None,
     ) -> dict:
@@ -47,7 +47,7 @@ class ExplorerAPIClient(BaseAPIClient):
                 ``events``).
             insight: Insight ID.
             filters: Filters to apply.
-            aggregate: Aggregation method ("sum" or "mean").
+            aggregate: Aggregation method ("sum", "mean", or "count_distinct").
             events: Optional list of event dicts, each with ``"event_id"`` (int)
                 and ``"representation"`` (str, e.g. ``"entityeventp"``).
                 Use ``client.ontology.get_event_types()`` to browse available
@@ -63,9 +63,9 @@ class ExplorerAPIClient(BaseAPIClient):
                 "build_framework(entities, insight, filters, aggregate=None, events=None) — "
                 "check your argument order."
             )
-        if aggregate is not None and aggregate not in ("sum", "mean"):
+        if aggregate is not None and aggregate not in ("sum", "mean", "count_distinct"):
             raise InvalidConfigurationError(
-                f"aggregate must be 'sum', 'mean', or None (got {aggregate!r}). "
+                f"aggregate must be 'sum', 'mean', 'count_distinct', or None (got {aggregate!r}). "
                 "events is a keyword-only argument — pass it as events=... rather "
                 "than positionally, e.g. build_framework(entities, insight, filters, events=my_events)."
             )
