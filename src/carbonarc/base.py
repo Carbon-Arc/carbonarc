@@ -2,7 +2,6 @@ from carbonarc.block import BlockAPIClient
 from carbonarc.catalog import CatalogAPIClient
 from carbonarc.data import DataAPIClient
 from carbonarc.explorer import ExplorerAPIClient
-from carbonarc.hub import HubAPIClient
 from carbonarc.client import PlatformAPIClient
 from carbonarc.ontology import OntologyAPIClient
 from carbonarc.transcripts import TranscriptAPIClient
@@ -26,8 +25,8 @@ class CarbonArcClient:
         Args:
             token (str): The authentication token to be used for requests.
             host (str): Base URL of the data API (power-api). Hosts
-                ``/v2/*`` routes — data library, catalog, ontology, hub,
-                explorer, platform/billing.
+                ``/v2/*`` routes — data library, catalog, ontology,
+                explorer, transcripts, platform/billing.
             cams_host (str): Base URL of the admin/auth API (CAMS). Hosts
                 ``/api/v1/*`` routes — all of Block (dataset discovery,
                 request lifecycle, pre-approvals, S3 ARN management,
@@ -42,7 +41,6 @@ class CarbonArcClient:
         self.catalog = CatalogAPIClient(token=token, host=host, version=version)
         self.data = DataAPIClient(token=token, host=host, version=version)
         self.explorer = ExplorerAPIClient(token=token, host=host, version=version)
-        self.hub = HubAPIClient(token=token, host=host, version=version)
         self.client = PlatformAPIClient(token=token, host=host, version=version)
         self.ontology = OntologyAPIClient(token=token, host=host, version=version)
         self.transcripts = TranscriptAPIClient(token=token, host=host, version=version)
