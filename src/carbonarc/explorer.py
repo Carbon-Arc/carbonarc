@@ -348,9 +348,16 @@ class ExplorerAPIClient(BaseAPIClient):
         else:
             return response
     
-    def get_valid_insights_for_framework_panel_debias(self, framework_id: str) -> List[int]:
+    def get_valid_insights_for_framework_panel_debias(self, framework_id: str) -> List[Dict[str, Any]]:
         """
         Retrieve valid insights for a framework.
+
+        Args:
+            framework_id: Framework ID.
+
+        Returns:
+            List of insight dictionaries, each with "insight_id", "insight_label",
+            and "insight_type".
         """
         endpoint = f"{framework_id}/panel-debias-info"
         url = f"{self.base_framework_url}/{endpoint}"
@@ -405,9 +412,20 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/{endpoint}"
         return self._get(url)
     
-    def get_framework_status(self, framework_id: Union[str, list[str]]) -> dict:
+    def get_framework_status(self, framework_id: Union[str, list[str]]) -> List[Dict[str, Any]]:
         """
-        Retrieve status for a specific framework.
+        Retrieve status for one or more frameworks.
+
+        Args:
+            framework_id: A single framework ID or a list of framework IDs.
+
+        Returns:
+            List of status dictionaries, one per requested framework — a single
+            framework ID also returns a one-element list. Each entry contains
+            "framework_id", "refresh_available", "reinstatement_available",
+            "framework_refresh_timestamp", "framework_reinstatement_timestamp",
+            "insight_refresh_timestamp", "insight_reinstatement_timestamp",
+            "last_reinstatement_reason", and "message".
         """
         endpoint = "framework-status"
         url = f"{self.base_framework_url}/{endpoint}"
