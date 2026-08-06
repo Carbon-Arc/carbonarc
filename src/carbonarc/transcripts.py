@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from carbonarc.utils.client import BaseAPIClient
 
@@ -23,7 +23,7 @@ class TranscriptAPIClient(BaseAPIClient):
         ticker: Optional[str] = None,
         entity: Optional[List[str]] = None,
         transcript_type: Optional[str] = None,
-        region: Optional[str] = None,
+        region: Optional[Union[str, List[str]]] = None,
         search: Optional[str] = None,
         interview_date_from: Optional[str] = None,
         interview_date_to: Optional[str] = None,
@@ -41,9 +41,13 @@ class TranscriptAPIClient(BaseAPIClient):
 
         Args:
             ticker: Filter by ticker symbol (entity label).
-            entity: Filter by one or more entity labels.
+            entity: Filter by one or more entity **ids**, not labels. Ids come
+                from :meth:`list_transcript_entities`; a label such as
+                ``"Apple Inc"`` matches nothing.
             transcript_type: Filter by transcript type (e.g. ``"expert_interview"``).
-            region: Filter by region (e.g. ``"North America"``).
+            region: Filter by one or more regions (e.g. ``"North America"`` or
+                ``["North America", "Europe"]``). Exact match; values come
+                from :meth:`list_transcript_regions`.
             search: Search in title and description.
             interview_date_from: ISO date string lower bound, inclusive (e.g. ``"2024-01-01"``).
             interview_date_to: ISO date string upper bound, inclusive (e.g. ``"2024-12-31"``).
@@ -55,6 +59,8 @@ class TranscriptAPIClient(BaseAPIClient):
 
         Returns:
             Dict with ``transcripts`` (list), ``total`` (int), ``page`` (int), and ``size`` (int).
+            Each transcript carries a ``price``: the token cost for your client,
+            which may differ from another client's price for the same transcript.
         """
         params: dict = {"sort_by": sort_by, "order": order, "page": page, "size": size}
         for key, val in {
@@ -73,6 +79,29 @@ class TranscriptAPIClient(BaseAPIClient):
             params["is_purchased"] = is_purchased
         return self._get(self._base_url, params=params)
 
+    def list_transcript_entities(self) -> List[dict]:
+        """List the entity facets available across the transcripts you can browse.
+
+        Use this to discover the entity ids accepted by the ``entity`` filter on
+        :meth:`list_transcripts`.
+
+        Returns:
+            List of dicts with ``id`` (entity id), ``label`` (display name, e.g.
+            a ticker), and ``count`` (number of transcripts tagged with it).
+        """
+        return self._get(f"{self._base_url}/entities")
+
+    def list_transcript_regions(self) -> List[dict]:
+        """List the region facets available across the transcripts you can browse.
+
+        Use this to discover the values accepted by the ``region`` filter on
+        :meth:`list_transcripts`.
+
+        Returns:
+            List of dicts with ``region`` (str) and ``count`` (int).
+        """
+        return self._get(f"{self._base_url}/regions")
+
     def get_transcript(self, transcript_id: str) -> dict:
         """Get metadata for a single transcript.
 
@@ -84,7 +113,8 @@ class TranscriptAPIClient(BaseAPIClient):
 
         Returns:
             Dict with transcript metadata, ``has_pdf`` flag (whether a PDF
-            version is available), and ``is_purchased`` flag.
+            version is available), ``is_purchased`` flag, and ``price`` (the
+            token cost for your client).
         """
         return self._get(f"{self._base_url}/{transcript_id}")
 
