@@ -441,12 +441,29 @@ class BlockAPIClient(BaseAPIClient):
                         "vendor": "...",
                         "description": "...",
                         "status": "ready" | "coming_soon" | ...,
+                        "lag_days": 180,               # normalized from "lag"
                         "cuts": [
                             {
                                 "cut": "...",
-                                "lags": ["6m", ...],
                                 "annual_price": "...",
-                                "request_statuses": {"6m": "APPROVED", ...},
+                                # "lags" + "request_statuses" are replaced
+                                # by one entry per (cut, lag) SKU:
+                                "skus": [
+                                    {
+                                        "lag_days": 180,
+                                        "request_status": "APPROVED",
+                                        "arns": [
+                                            {
+                                                "id": "...",
+                                                "aws_arn": "arn:aws:iam::...",
+                                                "status": "active",
+                                                "created_at": "...",
+                                            },
+                                            ...
+                                        ],
+                                    },
+                                    ...
+                                ],
                                 ...
                             },
                             ...
@@ -457,7 +474,10 @@ class BlockAPIClient(BaseAPIClient):
                         {
                             "id": "...",
                             "status": "pending_block_admin" | ...,
-                            "lag": "...", "cut": "...",
+                            "lag_days": 180,           # normalized from "lag"
+                            "cut": "...",
+                            "internal_queue_step":
+                                "pending" | "approved" | "rejected" | None,
                             "requestor_email": "...",
                             "approved_by_block_admin": "...",
                             "approved_by_compliance": "...",
@@ -467,6 +487,10 @@ class BlockAPIClient(BaseAPIClient):
                         ...
                     ],
                 }
+
+        The dataset-level ``dataset_id`` and the raw ``lag`` strings are
+        stripped from ``catalog`` and from each request; both are echoed
+        at the top level or in normalized ``lag_days`` form.
         """
         catalog_entry = next(
             (
