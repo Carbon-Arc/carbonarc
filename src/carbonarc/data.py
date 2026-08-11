@@ -197,18 +197,29 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url)
 
-    def get_insights_by_dataset(self, dataset_id: str) -> dict:
+    def get_insights_by_dataset(
+        self,
+        dataset_id: str,
+        page: int = 1,
+        size: int = 100,
+    ) -> dict:
         """
-        Retrieve all insights associated with a specific dataset.
+        Retrieve the insights associated with a specific dataset.
+
+        The response is paginated. Use ``total`` and ``pages`` to decide
+        whether more pages need to be fetched.
 
         Args:
             dataset_id: The identifier of the dataset to retrieve insights for.
+            page: Page number (default 1).
+            size: Number of insights per page (default 100, maximum 100).
 
         Returns:
-            Dictionary containing the insights for the specified dataset.
+            Dictionary with ``total``, ``page``, ``size``, ``pages`` and an
+            ``items`` list of insights for the specified dataset.
         """
         url = f"{self.base_data_url}/data/{dataset_id}/insights"
-        return self._get(url)
+        return self._get(url, params={"page": page, "size": size})
 
     def get_library_version_changes(
         self, 
