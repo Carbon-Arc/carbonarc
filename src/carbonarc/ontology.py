@@ -238,19 +238,61 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/insight/{insight_id}/entities"
         return self._get(url)
     
-    def get_subjects(self) -> dict:
+    def get_subjects(self, limit: Optional[int] = None) -> dict:
         """
         Retrieve all subjects.
+
+        Args:
+            limit: Maximum number of subjects to return. Returns all when omitted.
+
+        Returns:
+            Dictionary with an ``items`` list of subjects.
         """
+        params: Dict[str, Any] = {}
+        if limit is not None:
+            params["limit"] = limit
         url = f"{self.base_ontology_url}/subjects"
-        return self._get(url)
+        return self._get(url, params=params)
     
-    def get_topics(self) -> dict:
+    def get_topics(
+        self,
+        limit: Optional[int] = None,
+        entity_id: Optional[int] = None,
+        entity_representation: Optional[str] = None,
+        dataset_ids: Optional[List[str]] = None,
+    ) -> dict:
         """
-        Retrieve all topics.
+        Retrieve all topics, optionally scoped to an entity or to datasets.
+
+        Args:
+            limit: Maximum number of topics to return. Returns all when omitted.
+            entity_id: Only return topics carrying data for this entity. Must be
+                passed together with ``entity_representation``.
+            entity_representation: Representation for ``entity_id`` (e.g. ``"ticker"``).
+                Must be passed together with ``entity_id``.
+            dataset_ids: Only return topics sourced from these datasets.
+
+        Returns:
+            Dictionary with an ``items`` list of topics.
+
+        Raises:
+            ValueError: If only one of ``entity_id`` / ``entity_representation`` is given.
         """
+        if (entity_id is None) != (entity_representation is None):
+            raise ValueError(
+                "entity_id and entity_representation must be provided together"
+            )
+        params: Dict[str, Any] = {}
+        if limit is not None:
+            params["limit"] = limit
+        if entity_id is not None:
+            params["entity_id"] = entity_id
+        if entity_representation is not None:
+            params["entity_representation"] = entity_representation
+        if dataset_ids:
+            params["dataset_ids"] = dataset_ids
         url = f"{self.base_ontology_url}/topics"
-        return self._get(url)
+        return self._get(url, params=params)
     
     def get_insights_for_subject(self, subject_id: int) -> dict:
         """
@@ -268,17 +310,43 @@ class OntologyAPIClient(BaseAPIClient):
         
     def get_ontology_version(self) -> dict:
         """
-        Retrieve the current ontology version.
+        Retrieve the available ontology versions.
+
+        .. note::
+            This is an alias for :meth:`get_ontology_versions` and returns the
+            same payload — every available version, not just the current one.
+            Prefer :meth:`get_ontology_versions` in new code.
+
+        Returns:
+            Dictionary with a ``versions`` list.
         """
         url = f"{self.base_ontology_url}/ontology-versions"
         return self._get(url)
     
-    def get_ontology_tree(self) -> dict:
+    def get_ontology_tree(
+        self,
+        version: Optional[str] = None,
+        entity_keyword: Optional[str] = None,
+    ) -> dict:
         """
         Retrieve the ontology tree.
+
+        Args:
+            version: Ontology version to filter by. Defaults to ``"latest"``
+                server-side when omitted.
+            entity_keyword: Only include representations holding entities that
+                match this keyword.
+
+        Returns:
+            Dictionary describing the ontology tree.
         """
+        params: Dict[str, Any] = {}
+        if version is not None:
+            params["version"] = version
+        if entity_keyword is not None:
+            params["entity_keyword"] = entity_keyword
         url = f"{self.base_ontology_url}/ontology-tree"
-        return self._get(url)
+        return self._get(url, params=params)
 
     def get_ontology_versions(self) -> Dict[str, Any]:
         """
