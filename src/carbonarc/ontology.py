@@ -25,16 +25,26 @@ class OntologyAPIClient(BaseAPIClient):
         
         self.base_ontology_url = self._build_base_url("ontology")
     
-    def get_entity_map(self) -> dict:
+    def get_entity_map(self) -> List[Dict[str, Any]]:
         """
         Retrieve the entity map.
+
+        Returns:
+            List of representation objects, each with ``entity``, ``domain``
+            and ``representation``. The route answers with a JSON array, not
+            an object.
         """
         url = f"{self.base_ontology_url}/entity-map"
         return self._get(url)
     
-    def get_insight_map(self) -> dict:
+    def get_insight_map(self) -> List[Dict[str, Any]]:
         """
         Retrieve the insight map.
+
+        Returns:
+            List of subject/topic pairs, each with ``subject_id``, ``subject``,
+            ``topic_id`` and ``topic``. The route answers with a JSON array,
+            not an object.
         """
         url = f"{self.base_ontology_url}/insight-map"
         return self._get(url)
