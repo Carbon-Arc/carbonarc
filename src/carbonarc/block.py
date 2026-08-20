@@ -50,7 +50,15 @@ def _lag_to_days(lag) -> Optional[int]:
     return None
 
 
-_ACCESS_STATUSES = {"APPROVED", "TRIAL_ACTIVE", "CONTRACTED"}
+# CAMS emits ``TRIAL_ACTIVE`` today. ``EVALUATION_ACTIVE`` is accepted
+# alongside it so the SDK needs no change when the server-side rename
+# to evaluation-period vocabulary lands.
+_ACCESS_STATUSES = {
+    "APPROVED",
+    "TRIAL_ACTIVE",
+    "EVALUATION_ACTIVE",
+    "CONTRACTED",
+}
 _PENDING_STATUSES = {"PENDING"}
 _DENIED_STATUSES = {"DENIED"}
 
@@ -84,6 +92,56 @@ def _simplify_internal_queue_step(request: dict) -> Optional[str]:
     if step in _INTERNAL_PENDING_STEPS:
         return "pending"
     return None
+
+
+# Evaluation-period fields as CAMS spells them today (``trial_*``) mapped
+# onto the ``evaluation_*`` names the SDK speaks outward. Reads accept
+# either spelling, so the SDK keeps working through the server-side rename.
+_EVALUATION_FIELD_ALIASES = {
+    "evaluation_start_date": ("evaluation_start_date", "trial_start_date"),
+    "evaluation_start_trigger": ("evaluation_start_trigger", "trial_start_trigger"),
+    "evaluation_end_date": ("evaluation_end_date", "trial_end_date"),
+    "evaluation_duration_months": (
+        "evaluation_duration_months",
+        "trial_duration_months",
+    ),
+}
+
+# Legacy → current key names, derived from the alias table so the two can
+# never drift apart.
+_LEGACY_EVALUATION_KEYS = {
+    legacy: current
+    for current, names in _EVALUATION_FIELD_ALIASES.items()
+    for legacy in names
+    if legacy != current
+}
+
+
+def _evaluation_field(request: dict, name: str):
+    """Read an evaluation-period field off a CAMS request row, accepting
+    either the ``evaluation_*`` name or the legacy ``trial_*`` name."""
+    for key in _EVALUATION_FIELD_ALIASES[name]:
+        value = request.get(key)
+        if value is not None:
+            return value
+    return None
+
+
+def _normalize_evaluation_keys(row: dict) -> dict:
+    """Rewrite legacy ``trial_*`` keys on a pass-through request row to
+    their ``evaluation_*`` names, so no trial vocabulary reaches callers.
+
+    An already-current key wins over its legacy twin — during the
+    server-side rename a row may briefly carry both.
+    """
+    out = {}
+    for key, value in row.items():
+        current = _LEGACY_EVALUATION_KEYS.get(key)
+        if current is None:
+            out[key] = value
+        elif current not in row:
+            out[current] = value
+    return out
 
 
 def _absolutize_tear_sheet(row: dict, cams_host: str) -> dict:
@@ -198,8 +256,8 @@ def _dataset_has_status(dataset: dict, statuses: Iterable[str]) -> bool:
 class BlockAPIClient(BaseAPIClient):
     """
     A client for Carbon Arc Block functionality:
-    dataset discovery, trial-access request lifecycle, dataset pre-approvals,
-    and S3 ARN management.
+    dataset discovery, evaluation-period access request lifecycle,
+    dataset pre-approvals, and S3 ARN management.
     """
 
     def __init__(
@@ -229,10 +287,11 @@ class BlockAPIClient(BaseAPIClient):
         Returns:
             Dict with key ``datasets`` (list of dataset entries). Each entry
             carries a ``cuts`` list whose items have ``request_statuses``
-            mapping lag → one of NONE / PENDING / APPROVED / TRIAL_ACTIVE /
-            CONTRACTED / DENIED, plus a ``compliance_tear_sheet`` block
-            whose ``download_url`` is an absolute URL the caller can fetch
-            directly.
+            mapping lag → one of NONE / PENDING / APPROVED /
+            EVALUATION_ACTIVE (still spelled TRIAL_ACTIVE by the server
+            today) / CONTRACTED / DENIED, plus a ``compliance_tear_sheet``
+            block whose ``download_url`` is an absolute URL the caller can
+            fetch directly.
         """
         response = self._get(f"{self._v1_url}/datasets")
         for d in response.get("datasets", []):
@@ -240,8 +299,8 @@ class BlockAPIClient(BaseAPIClient):
         return response
 
     def my_access(self) -> list[dict]:
-        """Datasets the caller has active access to (approved, trial active,
-        or contracted) on at least one cut/lag."""
+        """Datasets the caller has active access to (approved, evaluation
+        active, or contracted) on at least one cut/lag."""
         return [
             d for d in self.list_datasets().get("datasets", [])
             if _dataset_has_status(d, _ACCESS_STATUSES)
@@ -320,11 +379,11 @@ class BlockAPIClient(BaseAPIClient):
                                             updated_at on the rejection
                                             transition)
           - ``cancellation_requested``   — ``actor``, ``at``, ``reason``
-          - ``trial_started``            — ``at`` (trial_start_date),
+          - ``evaluation_started``       — ``at`` (evaluation_start_date),
                                             ``trigger`` (ingestion vs. admin
                                             force-start)
           - ``first_ingestion``          — ``at`` (first_ingestion_at)
-          - ``trial_ends``               — ``at`` (trial_end_date)
+          - ``evaluation_ends``          — ``at`` (evaluation_end_date)
 
         A step is only emitted if the underlying field is populated.
         Returns an empty list if the client has never filed a request
@@ -385,11 +444,12 @@ class BlockAPIClient(BaseAPIClient):
                     "reason": r.get("cancellation_request_reason"),
                 })
 
-            if r.get("trial_start_date"):
+            evaluation_start = _evaluation_field(r, "evaluation_start_date")
+            if evaluation_start:
                 events.append({
-                    "step": "trial_started",
-                    "at": r.get("trial_start_date"),
-                    "trigger": r.get("trial_start_trigger"),
+                    "step": "evaluation_started",
+                    "at": evaluation_start,
+                    "trigger": _evaluation_field(r, "evaluation_start_trigger"),
                 })
 
             if r.get("first_ingestion_at"):
@@ -398,10 +458,11 @@ class BlockAPIClient(BaseAPIClient):
                     "at": r.get("first_ingestion_at"),
                 })
 
-            if r.get("trial_end_date"):
+            evaluation_end = _evaluation_field(r, "evaluation_end_date")
+            if evaluation_end:
                 events.append({
-                    "step": "trial_ends",
-                    "at": r.get("trial_end_date"),
+                    "step": "evaluation_ends",
+                    "at": evaluation_end,
                 })
 
             out.append({
@@ -411,7 +472,9 @@ class BlockAPIClient(BaseAPIClient):
                 "cut": r.get("cut"),
                 "current_status": r.get("status"),
                 "internal_queue_step": _simplify_internal_queue_step(r),
-                "trial_duration_months": r.get("trial_duration_months"),
+                "evaluation_duration_months": _evaluation_field(
+                    r, "evaluation_duration_months"
+                ),
                 "annual_price": r.get("annual_price"),
                 "events": events,
             })
@@ -501,7 +564,9 @@ class BlockAPIClient(BaseAPIClient):
         for r in all_requests:
             if str(r.get("dataset_id")) != dataset_id:
                 continue
-            simplified = {k: v for k, v in r.items() if k != "lag"}
+            simplified = _normalize_evaluation_keys(
+                {k: v for k, v in r.items() if k != "lag"}
+            )
             simplified["lag_days"] = _lag_to_days(r.get("lag"))
             simplified["internal_queue_step"] = _simplify_internal_queue_step(r)
             requests_for_dataset.append(simplified)
@@ -511,9 +576,9 @@ class BlockAPIClient(BaseAPIClient):
             "requests": requests_for_dataset,
         }
 
-    # ---- Phase 2: trial-access lifecycle ------------------------------------
+    # ---- Phase 2: evaluation-period access lifecycle ------------------------
 
-    def request_trial(
+    def request_evaluation(
         self,
         dataset_id: str,
         lag: Optional[str] = None,
@@ -523,7 +588,7 @@ class BlockAPIClient(BaseAPIClient):
         accepted_block_tou_version_id: Optional[str] = None,
     ) -> dict:
         """
-        Submit a Block trial-access request for ``dataset_id``.
+        Submit a Block evaluation-period access request for ``dataset_id``.
 
         Args:
             dataset_id: CA-prefixed dataset identifier (e.g. ``"CA0027"``).
