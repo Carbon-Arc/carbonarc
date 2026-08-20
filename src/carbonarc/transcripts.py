@@ -83,8 +83,9 @@ class TranscriptAPIClient(BaseAPIClient):
             transcript_id: UUID of the transcript.
 
         Returns:
-            Dict with transcript metadata, ``has_pdf`` flag (whether a PDF
-            version is available), and ``is_purchased`` flag.
+            Dict with transcript metadata, ``has_pdf`` flag (whether the source
+            supplied a PDF; it does not gate :meth:`download_transcript`, which
+            can render a PDF for any transcript), and ``is_purchased`` flag.
         """
         return self._get(f"{self._base_url}/{transcript_id}")
 
@@ -103,19 +104,28 @@ class TranscriptAPIClient(BaseAPIClient):
         """
         return self._post(f"{self._base_url}/{transcript_id}/purchase")
 
-    def download_transcript(self, transcript_id: str, fmt: str = "txt") -> dict:
-        """Get a presigned download URL for a purchased transcript.
+    def download_transcript(self, transcript_id: str, fmt: str = "txt") -> bytes:
+        """Download a purchased transcript as file bytes.
 
-        The URL expires in 15 minutes. Also records the download for audit
-        purposes.
+        The file is built per request from the canonical transcript text and
+        stamped with the license line for the calling account, so no two
+        accounts receive identical bytes. Both formats are always available: the
+        PDF is rendered from that same text rather than served from a stored
+        PDF. The download is also recorded for audit purposes.
 
         Args:
             transcript_id: UUID of the purchased transcript.
             fmt: File format — ``"txt"`` (default) or ``"pdf"``.
 
         Returns:
-            Dict with ``url`` (presigned S3 URL), ``expires_in`` (seconds), and ``format``.
+            The raw file bytes: UTF-8 text for ``"txt"``, PDF for ``"pdf"``.
+
+        Raises:
+            ForbiddenError: The account lacks the Transcripts entitlement (403).
+            requests.exceptions.HTTPError: If the API request fails, e.g. a 402
+                when the transcript has not been purchased or a 404 when the
+                transcript does not exist.
         """
-        return self._get(
+        return self._stream(
             f"{self._base_url}/{transcript_id}/download", params={"fmt": fmt}
-        )
+        ).content
