@@ -44,7 +44,7 @@ class TranscriptAPIClient(BaseAPIClient):
             entity: Filter by one or more entity labels.
             transcript_type: Filter by transcript type (e.g. ``"expert_interview"``).
             region: Filter by region (e.g. ``"North America"``).
-            search: Search in title and description.
+            search: Search in title, description, and expert ID.
             interview_date_from: ISO date string lower bound, inclusive (e.g. ``"2024-01-01"``).
             interview_date_to: ISO date string upper bound, inclusive (e.g. ``"2024-12-31"``).
             is_purchased: If ``True``, return only purchased transcripts; if ``False``, only ones not yet purchased.
@@ -54,7 +54,10 @@ class TranscriptAPIClient(BaseAPIClient):
             size: Page size, 1–100 (default ``20``).
 
         Returns:
-            Dict with ``transcripts`` (list), ``total`` (int), ``page`` (int), and ``size`` (int).
+            Dict with ``transcripts`` (list), ``total`` (int), ``page`` (int),
+            and ``size`` (int). Each item also carries ``expert_id``, the
+            identifier of the interviewed expert, which is ``None`` when the
+            field is not exposed to your account.
         """
         params: dict = {"sort_by": sort_by, "order": order, "page": page, "size": size}
         for key, val in {
@@ -84,7 +87,9 @@ class TranscriptAPIClient(BaseAPIClient):
 
         Returns:
             Dict with transcript metadata, ``has_pdf`` flag (whether a PDF
-            version is available), and ``is_purchased`` flag.
+            version is available), ``is_purchased`` flag, and ``expert_id``
+            (the identifier of the interviewed expert, or ``None`` when the
+            field is not exposed to your account).
         """
         return self._get(f"{self._base_url}/{transcript_id}")
 
