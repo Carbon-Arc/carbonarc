@@ -292,6 +292,15 @@ class BlockAPIClient(BaseAPIClient):
             today) / CONTRACTED / DENIED, plus a ``compliance_tear_sheet``
             block whose ``download_url`` is an absolute URL the caller can
             fetch directly.
+
+            Every entry also carries ``platform_access_blocked``. ``True``
+            means the client holds no Platform (API / MCP) entitlement to
+            the dataset's underlying source, so a Block approval on its own
+            would still leave the data unreadable. ``None`` is the common
+            case and means Carbon Arc did not evaluate it: the check is
+            scoped to compliance-managed accounts, and is also left
+            undetermined when the source codename cannot be resolved. Read
+            ``None`` as "no warning", never as "blocked".
         """
         response = self._get(f"{self._v1_url}/datasets")
         for d in response.get("datasets", []):
@@ -488,7 +497,9 @@ class BlockAPIClient(BaseAPIClient):
         request timeline against this dataset) into a single dict. Returns
         ``None`` for ``catalog`` if the dataset is not visible to the
         caller's client, and an empty list for ``requests`` if no requests
-        exist.
+        exist. ``catalog`` carries the catalog entry's own
+        ``platform_access_blocked`` unchanged; see :meth:`list_datasets`
+        for how to read it.
 
         Args:
             dataset_id: CA-prefixed dataset identifier (e.g. ``"CA0031"``).
@@ -504,6 +515,7 @@ class BlockAPIClient(BaseAPIClient):
                         "vendor": "...",
                         "description": "...",
                         "status": "ready" | "coming_soon" | ...,
+                        "platform_access_blocked": True | False | None,
                         "cuts": [
                             {
                                 "cut": "...",
