@@ -84,8 +84,7 @@ class TranscriptAPIClient(BaseAPIClient):
             transcript_id: UUID of the transcript.
 
         Returns:
-            Dict with transcript metadata, ``has_pdf`` flag (whether a PDF
-            version is available), and ``is_purchased`` flag.
+            Dict with transcript metadata and ``is_purchased`` flag.
         """
         return self._get(f"{self._base_url}/{transcript_id}")
 
