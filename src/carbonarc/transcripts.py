@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 from carbonarc.utils.client import BaseAPIClient
@@ -83,8 +84,7 @@ class TranscriptAPIClient(BaseAPIClient):
             transcript_id: UUID of the transcript.
 
         Returns:
-            Dict with transcript metadata, ``has_pdf`` flag (whether a PDF
-            version is available), and ``is_purchased`` flag.
+            Dict with transcript metadata and ``is_purchased`` flag.
         """
         return self._get(f"{self._base_url}/{transcript_id}")
 
@@ -103,19 +103,40 @@ class TranscriptAPIClient(BaseAPIClient):
         """
         return self._post(f"{self._base_url}/{transcript_id}/purchase")
 
-    def download_transcript(self, transcript_id: str, fmt: str = "txt") -> dict:
-        """Get a presigned download URL for a purchased transcript.
+    def download_transcript(
+        self, transcript_id: str, fmt: str = "txt", directory: Optional[str] = None
+    ) -> str:
+        """Download a purchased transcript to a local file.
 
-        The URL expires in 15 minutes. Also records the download for audit
-        purposes.
+        The file is written as ``transcript_{transcript_id}.{fmt}`` in the
+        target directory, which is created if it does not already exist. An
+        existing file at the same path is overwritten.
 
         Args:
             transcript_id: UUID of the purchased transcript.
             fmt: File format — ``"txt"`` (default) or ``"pdf"``.
+            directory: The directory where the file should be saved. Defaults
+                to the current directory when not provided. The directory
+                will be created if it doesn't exist.
 
         Returns:
-            Dict with ``url`` (presigned S3 URL), ``expires_in`` (seconds), and ``format``.
+            str: The absolute path to the written file.
+
+        Raises:
+            requests.exceptions.HTTPError: If the API request fails, e.g. a 404
+                when the transcript id does not exist, a 402 when it hasn't
+                been purchased, or a 401 when the authentication token is
+                missing or invalid.
+            OSError: If there are file system errors (permissions, disk space, etc.).
         """
-        return self._get(
+        file_bytes = self._stream(
             f"{self._base_url}/{transcript_id}/download", params={"fmt": fmt}
-        )
+        ).content
+        file_name = f"transcript_{transcript_id}.{fmt}"
+        output_dir = os.path.abspath(directory if directory is not None else ".")
+        os.makedirs(output_dir, exist_ok=True)
+        file_path = os.path.join(output_dir, file_name)
+        with open(file_path, "wb") as f:
+            f.write(file_bytes)
+
+        return file_path
