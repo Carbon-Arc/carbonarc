@@ -146,7 +146,7 @@ class DataAPIClient(BaseAPIClient):
 
         return self._get(url, params=params)
 
-    def get_dataset_schedule(self, dataset_id: str) -> list:
+    def get_dataset_schedule(self, dataset_id: str) -> dict:
         """
         Get the update schedule for a specific dataset from the Carbon Arc API.
 
@@ -154,8 +154,9 @@ class DataAPIClient(BaseAPIClient):
             dataset_id (str): The identifier of the dataset to retrieve the schedule for.
 
         Returns:
-            list: A list of dictionaries containing schedule information for the specified dataset,
-                  including next_run_start, next_run_end, and last_update fields.
+            dict: A dictionary with a "schedules" key holding a list of schedule
+                  entries for the specified dataset. Each entry contains
+                  next_run_start, next_run_end, and last_update fields.
         """
         url = f"{self.base_data_url}/schedule/{dataset_id}"
         return self._get(url)
