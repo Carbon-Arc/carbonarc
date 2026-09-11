@@ -276,8 +276,9 @@ class ExplorerAPIClient(BaseAPIClient):
 
         Args:
             framework_id: Framework ID.
-            page: Page number (default 1).
-            size: Number of items per page (default 100).
+            page: Page number (default 1). Only used when fetch_all is False.
+            size: Number of items per page (default 100). Only used when
+                fetch_all is False.
             data_type: Data type to retrieve ("dataframe" or "timeseries").
 
         Returns:
@@ -289,7 +290,13 @@ class ExplorerAPIClient(BaseAPIClient):
                 logger.warning("Page and size are ignored when fetch_all is True")
             url = f"{self.base_framework_url}/{endpoint}?fetch_all=true"
         else:
-            url = f"{self.base_framework_url}/{endpoint}?page={page}&size={size}"
+            # fetch_all defaults to true on the API, so it has to be sent
+            # explicitly for page/size to be honored, and the API requires
+            # both of them whenever it is false.
+            url = (
+                f"{self.base_framework_url}/{endpoint}"
+                f"?fetch_all=false&page={page or 1}&size={size or 100}"
+            )
         if data_type:
             url += f"&data_type={data_type}"
         if data_type == "dataframe":
@@ -360,14 +367,15 @@ class ExplorerAPIClient(BaseAPIClient):
         self,
         framework_id: str,
         data_type: Optional[Literal["dataframe", "timeseries"]] = None,
+        size: int = 100,
     ):
         """
         Iterate over all data for a framework, yielding each page.
 
         Args:
             framework_id: Framework ID.
-            page_size: Number of items per page (default 100).
             data_type: Data type to yield ("dataframe" or "timeseries").
+            size: Number of items per page (default 100).
 
         Yields:
             Data for each page as a DataFrame, timeseries, or dictionary.
@@ -376,12 +384,11 @@ class ExplorerAPIClient(BaseAPIClient):
         while True:
             response = self.get_framework_data(
                 framework_id=framework_id,
-                fetch_all=True,
+                fetch_all=False,
+                page=page,
+                size=size,
             )
-            if not response:
-                break
-            total_pages = response.get("pages", 0)
-            if page > total_pages:
+            if not response or not response.get("data"):
                 break
             if data_type == "dataframe":
                 yield pd.DataFrame(response.get("data", {}))
@@ -389,6 +396,8 @@ class ExplorerAPIClient(BaseAPIClient):
                 yield timeseries_response_to_pandas(response=response)
             else:
                 yield response
+            if page >= response.get("pages", 0):
+                break
             page += 1
     
     def get_framework_metadata(self, framework_id: str) -> dict:
