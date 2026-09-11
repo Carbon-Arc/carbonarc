@@ -346,21 +346,30 @@ class OntologyAPIClient(BaseAPIClient):
         """
         Retrieve event entities, optionally filtered by insight, entity, or search query.
 
-        When ``search`` is provided the results are ranked by vector similarity
-        against the query; use ``min_score`` to control the relevance threshold.
+        When ``search`` is provided the results are ranked by relevance against
+        the query; use ``min_score`` to control the relevance threshold. On the
+        search path ``entity_id``/``entity_representation`` are only applied
+        when ``insight_id`` is also given, and the reported ``total`` reflects
+        the capped batch the search returns.
 
         Args:
             insight_id: Filter events by insight ID.
-            entity_id: Filter events by entity ID.
-            entity_representation: Filter events by representation (e.g. ``"entityeventp"``).
-                Use :meth:`get_event_types` to see available representations.
-            search: Keyword query for vector-based event search.
-            min_score: Minimum similarity score when using ``search`` (0–1).
+            entity_id: carc_id of a non-event entity to filter events by.
+            entity_representation: Representation of the entity given in
+                ``entity_id`` (e.g. ``"artist"``, ``"ticker"``). Required
+                whenever ``entity_id`` is provided; supplying only one of the
+                pair raises a validation error.
+            search: Keyword query for event search.
+            min_score: Minimum relevance score when using ``search`` (0–1).
             page: Page number (default 1).
             size: Number of results per page (default 100).
 
         Returns:
-            Dictionary containing paginated event entities.
+            Dictionary with ``total``, ``page``, ``size``, ``pages`` and an
+            ``entities`` list. Each entry carries ``carc_id``, ``carc_name``,
+            ``entity_representation_name``, ``event_type``,
+            ``event_category``/``event_category_id`` and, for search results,
+            ``relevance_score``.
         """
         params: Dict[str, Any] = {"page": page, "size": size}
         if insight_id:

@@ -213,7 +213,7 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/filters"
         return self._post(url, json={"framework": framework})
     
-    def check_framework_price(self, framework: dict) -> dict:
+    def check_framework_price(self, framework: dict) -> Optional[float]:
         """
         Check the price of a framework.
 
@@ -221,7 +221,8 @@ class ExplorerAPIClient(BaseAPIClient):
             framework: Framework dictionary.
 
         Returns:
-            Dictionary of available filters.
+            The quoted price in tokens, or None when the platform returns no
+            price for the framework.
         """
         framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/order"
