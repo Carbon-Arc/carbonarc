@@ -184,18 +184,9 @@ class DataAPIClient(BaseAPIClient):
     
     def get_graph_data(self, graph_id: str, download_type: Literal["csv", "json", "graphml"] = "csv") -> dict:
         """
-        Get the information for a specific dataset from the Carbon Arc API.
-        
-        Args:
-            data_identifier (str): The identifier of the data to retrieve information for.
-            
-        Returns:
-            dict: A dictionary containing the information for the specified dataset.
+        Download the files for a graph identifier.
         """
-        endpoint = f"graph/{graph_id}/data"
-        url = f"{self.base_data_url}/{endpoint}?download_type={download_type}"
-
-        return self._get(url)
+        raise NotImplementedError("get_graph_data() has been deprecated and is not available in the API. Please use get_graph_information() for graph metadata.")
 
     def get_insights_by_dataset(self, dataset_id: str) -> dict:
         """
