@@ -37,3 +37,16 @@ class RateLimitError(CarbonArcException):
 class InvalidConfigurationError(CarbonArcException):
     """Raised when the configuration is invalid."""
     pass
+
+
+class QueryJobFailedError(CarbonArcException):
+    """Raised when a polled query job (framework price/filters/buy/data
+    behind the poll=true job-queue contract) reaches state="failed"."""
+    pass
+
+
+class QueryJobCancelledError(CarbonArcException):
+    """Raised when a polled query job reaches state="cancelled" -- either
+    this caller's own ``cancel_query_job()`` or another caller/thread with
+    the same job_id."""
+    pass
