@@ -19,7 +19,11 @@ fast enough to skip the queue entirely.
 import time
 from typing import Any, Callable, Dict, Optional
 
-from carbonarc.utils.exceptions import QueryJobCancelledError, QueryJobFailedError
+from carbonarc.utils.exceptions import (
+    QueryJobCancelledError,
+    QueryJobFailedError,
+    QueryJobTimeoutError,
+)
 
 _TERMINAL_STATES = {"done", "failed", "cancelled"}
 _DEFAULT_POLL_AFTER_MS = 1000
@@ -44,6 +48,7 @@ def poll_job_to_completion(
     poll_status: Callable[[str], Dict[str, Any]],
     finalize: Callable[[str], Dict[str, Any]],
     on_progress: Optional[Callable[[Dict[str, Any]], None]] = None,
+    max_wait_seconds: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Drive *initial* (a submit call's own response) to a final result.
 
@@ -64,6 +69,27 @@ def poll_job_to_completion(
             and every subsequent poll) -- the only way to observe
             ``position``/``eta_seconds``/``queue_wait_ms``/``is_heavy_query``
             live. Never called for a call that never queues at all.
+        max_wait_seconds: Optional client-side ceiling on total time spent
+            polling. ``None`` (default) polls indefinitely, matching prior
+            behavior -- deliberately not defaulted to a finite value, since
+            legitimate heavy queries are expected (see the heavy-query hint
+            surfaced via ``is_heavy_query``/``on_progress``) and this
+            package has no production-scale data to pick a ceiling that
+            will not false-positive on some caller's real workload.
+            Defense in depth only, not the primary safeguard: the server
+            already self-evicts a job stuck queued or running to
+            state="failed" well within an hour (see
+            ``QueryStatusTracker``'s ``max_queue_age_seconds`` /
+            ``max_running_age_seconds``), and this loop already terminates
+            promptly on that. This guards the case the server bound doesn't
+            cover -- a job that never reaches a terminal state at all (a
+            regression in that eviction logic, or a still-unanticipated way
+            for a job to get stuck) -- so a caller isn't left polling forever
+            no matter what the server does. If you do want a ceiling,
+            ``5400`` (90 minutes) is a reasonable starting point: safely
+            above the server's own worst-case combined bound (30 min queued
+            + 60 min running), so it will not fire against anything the
+            server already guarantees to resolve on its own.
 
     Returns:
         The operation's final result, in the exact shape a synchronous
@@ -74,9 +100,23 @@ def poll_job_to_completion(
         QueryJobCancelledError: the job reached ``state="cancelled"`` (this
             caller's own :meth:`cancel_query_job`, or another caller/thread
             sharing the same job_id).
+        QueryJobTimeoutError: ``max_wait_seconds`` elapsed before the job
+            reached a terminal state.
     """
     response = initial
+    # monotonic, not time.time(): immune to wall-clock adjustments (NTP
+    # sync, DST, manual changes) during a wait that can span many minutes.
+    deadline = (
+        time.monotonic() + max_wait_seconds if max_wait_seconds is not None else None
+    )
     while is_job_envelope(response) and response["state"] not in _TERMINAL_STATES:
+        if deadline is not None and time.monotonic() >= deadline:
+            job_id = response["job_id"]
+            raise QueryJobTimeoutError(
+                f"query job {job_id} did not reach a terminal state within "
+                f"{max_wait_seconds}s",
+                response=response,
+            )
         if on_progress is not None:
             on_progress(response)
         time.sleep((response.get("poll_after_ms") or _DEFAULT_POLL_AFTER_MS) / 1000)

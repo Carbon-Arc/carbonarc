@@ -50,3 +50,14 @@ class QueryJobCancelledError(CarbonArcException):
     this caller's own ``cancel_query_job()`` or another caller/thread with
     the same job_id."""
     pass
+
+
+class QueryJobTimeoutError(CarbonArcException):
+    """Raised when ``poll_job_to_completion``'s optional ``max_wait_seconds``
+    elapses before the job reaches a terminal state. Client-side defense in
+    depth only: the server has its own bounds on how long a job can sit
+    queued or running before it self-evicts to state="failed", so this
+    should be rare in practice -- it exists for the case where the server
+    never responds with a terminal state at all (a future regression in
+    that server-side eviction, or a job stuck in an unanticipated way)."""
+    pass
