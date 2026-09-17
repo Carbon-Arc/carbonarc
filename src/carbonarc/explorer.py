@@ -1,10 +1,11 @@
 import pandas as pd
-from typing import Optional, Literal, Union, List, Dict, Any
+from typing import Callable, Optional, Literal, Union, List, Dict, Any
 import logging
 
 from carbonarc.utils.timeseries import timeseries_response_to_pandas
 from carbonarc.utils.client import BaseAPIClient
 from carbonarc.utils.exceptions import InvalidConfigurationError
+from carbonarc.utils.query_job import poll_job_to_completion
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,45 @@ class ExplorerAPIClient(BaseAPIClient):
         """
         super().__init__(token=token, host=host, version=version)
         self.base_framework_url = self._build_base_url("framework")
+        self.base_query_jobs_url = self._build_base_url("query-jobs")
+
+    def get_query_job(self, job_id: str) -> dict:
+        """
+        Check the live status of a query job.
+
+        A request to any of this client's StarRocks-backed methods
+        (:meth:`check_framework_price`, :meth:`collect_framework_filters`,
+        :meth:`buy_frameworks`, :meth:`get_framework_data`) that queues
+        behind other work reports its ``job_id`` to that method's own
+        ``on_progress`` callback -- poll it independently with this method
+        (e.g. from another thread, or after saving the id and coming back
+        to it later) rather than only through that callback.
+
+        Args:
+            job_id: Job ID from a queued/running envelope.
+
+        Returns:
+            The live envelope: ``job_id``, ``state``
+            ("queued"/"running"/"done"/"failed"/"cancelled"), ``position``
+            (1-indexed place in the queue), ``eta_seconds``,
+            ``queue_wait_ms``, ``is_heavy_query``, ``poll_after_ms``.
+        """
+        return self._get(f"{self.base_query_jobs_url}/{job_id}")
+
+    def cancel_query_job(self, job_id: str) -> dict:
+        """
+        Cancel a queued or running query job.
+
+        A no-op on an already-terminal job -- its existing envelope is
+        returned as-is, since there's nothing left to stop.
+
+        Args:
+            job_id: Job ID to cancel.
+
+        Returns:
+            The job's envelope after the cancel attempt.
+        """
+        return self._delete(f"{self.base_query_jobs_url}/{job_id}")
 
     def build_framework(
         self,
@@ -199,35 +239,69 @@ class ExplorerAPIClient(BaseAPIClient):
                 del insight["carc_id"]
             return insight
 
-    def collect_framework_filters(self, framework: dict) -> dict:
+    def collect_framework_filters(
+        self,
+        framework: dict,
+        on_progress: Optional[Callable[[dict], None]] = None,
+    ) -> dict:
         """
         Retrieve available filters for a framework.
 
         Args:
             framework: Framework dictionary.
+            on_progress: Optional callback invoked with the live job
+                envelope while this request is queued behind other
+                StarRocks-backed work (the precompute cache answers most
+                calls synchronously -- this only applies to the live-fetch
+                fallback on a cache miss). Never called for a request that
+                never queues.
 
         Returns:
             Dictionary of available filters.
         """
         framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/filters"
-        return self._post(url, json={"framework": framework})
+        body = {"framework": framework}
+        return poll_job_to_completion(
+            initial=self._post(url, json=body, params={"poll": "true"}),
+            poll_status=self.get_query_job,
+            finalize=lambda job_id: self._post(
+                url, json=body, params={"poll": "true", "job_id": job_id}
+            ),
+            on_progress=on_progress,
+        )
     
-    def check_framework_price(self, framework: dict) -> dict:
+    def check_framework_price(
+        self,
+        framework: dict,
+        on_progress: Optional[Callable[[dict], None]] = None,
+    ) -> dict:
         """
         Check the price of a framework.
 
         Args:
             framework: Framework dictionary.
+            on_progress: Optional callback invoked with the live job
+                envelope (``job_id``/``state``/``position``/``eta_seconds``/
+                ``queue_wait_ms``/``is_heavy_query``) while this request is
+                queued behind other StarRocks-backed work. Never called for
+                a request that never queues.
 
         Returns:
-            Dictionary of available filters.
+            The framework's price.
         """
         framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/order"
-        price = self._post(url, json={"framework": framework}).get("price", None)
-        
-        return price
+        body = {"framework": framework}
+        response = poll_job_to_completion(
+            initial=self._post(url, json=body, params={"poll": "true"}),
+            poll_status=self.get_query_job,
+            finalize=lambda job_id: self._post(
+                url, json=body, params={"poll": "true", "job_id": job_id}
+            ),
+            on_progress=on_progress,
+        )
+        return response.get("price", None)
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
         """
@@ -244,24 +318,38 @@ class ExplorerAPIClient(BaseAPIClient):
         url = f"{self.base_framework_url}/filters/{filter_key}/options"
         return self._post(url, json={"framework": framework})
 
-    def buy_frameworks(self, order: Union[List[dict], dict]) -> dict:
+    def buy_frameworks(
+        self,
+        order: Union[List[dict], dict],
+        on_progress: Optional[Callable[[dict], None]] = None,
+    ) -> dict:
         """
         Purchase one or more frameworks.
 
         Args:
             order: List of framework dictionaries to purchase.
+            on_progress: Optional callback invoked with the live job
+                envelope while this request is queued behind other
+                StarRocks-backed work. Never called for a request that
+                never queues.
 
         Returns:
             Dictionary with purchase information.
         """
         if isinstance(order, dict):
             order = [order]
-        
-        validated_order = []
-        for framework in order:
-            validated_order.append(self._validate_framework(framework))
+
+        validated_order = [self._validate_framework(framework) for framework in order]
         url = f"{self.base_framework_url}/buy"
-        return self._post(url, json={"order": {"frameworks": validated_order}})
+        body = {"order": {"frameworks": validated_order}}
+        return poll_job_to_completion(
+            initial=self._post(url, json=body, params={"poll": "true"}),
+            poll_status=self.get_query_job,
+            finalize=lambda job_id: self._post(
+                url, json=body, params={"poll": "true", "job_id": job_id}
+            ),
+            on_progress=on_progress,
+        )
 
     def get_framework_data(
         self,
@@ -270,6 +358,7 @@ class ExplorerAPIClient(BaseAPIClient):
         page: Optional[int] = None,
         size: Optional[int] = None,
         fetch_all: bool = True,
+        on_progress: Optional[Callable[[dict], None]] = None,
     ) -> Union[pd.DataFrame, dict]:
         """
         Retrieve data for a specific framework.
@@ -279,6 +368,10 @@ class ExplorerAPIClient(BaseAPIClient):
             page: Page number (default 1).
             size: Number of items per page (default 100).
             data_type: Data type to retrieve ("dataframe" or "timeseries").
+            on_progress: Optional callback invoked with the live job
+                envelope while this request is queued behind other
+                StarRocks-backed work. Never called for a request that
+                never queues.
 
         Returns:
             Data as a DataFrame, dictionary, or timeseries, depending on data_type.
@@ -287,20 +380,34 @@ class ExplorerAPIClient(BaseAPIClient):
         if fetch_all:
             if page or size:
                 logger.warning("Page and size are ignored when fetch_all is True")
-            url = f"{self.base_framework_url}/{endpoint}?fetch_all=true"
+            base_url = f"{self.base_framework_url}/{endpoint}?fetch_all=true"
         else:
-            url = f"{self.base_framework_url}/{endpoint}?page={page}&size={size}"
+            base_url = f"{self.base_framework_url}/{endpoint}?page={page}&size={size}"
         if data_type:
-            url += f"&data_type={data_type}"
+            base_url += f"&data_type={data_type}"
+
+        def _fetch(job_id: Optional[str] = None) -> dict:
+            url = f"{base_url}&poll=true"
+            if job_id is not None:
+                url += f"&job_id={job_id}"
+            return self._get(url)
+
+        response = poll_job_to_completion(
+            initial=_fetch(),
+            poll_status=self.get_query_job,
+            finalize=_fetch,
+            on_progress=on_progress,
+        )
+
         if data_type == "dataframe":
-            df = pd.DataFrame(self._get(url).get("data", {}))
+            df = pd.DataFrame(response.get("data", {}))
             if "date" in df.columns:
                 df["date"] = pd.to_datetime(df["date"]).dt.date
             return df
         elif data_type == "timeseries":
-            return timeseries_response_to_pandas(response=self._get(url))
+            return timeseries_response_to_pandas(response=response)
         else:
-            return self._get(url)
+            return response
 
     def get_framework_panel_debias_data(
         self,
@@ -360,6 +467,7 @@ class ExplorerAPIClient(BaseAPIClient):
         self,
         framework_id: str,
         data_type: Optional[Literal["dataframe", "timeseries"]] = None,
+        on_progress: Optional[Callable[[dict], None]] = None,
     ):
         """
         Iterate over all data for a framework, yielding each page.
@@ -368,6 +476,9 @@ class ExplorerAPIClient(BaseAPIClient):
             framework_id: Framework ID.
             page_size: Number of items per page (default 100).
             data_type: Data type to yield ("dataframe" or "timeseries").
+            on_progress: Optional callback invoked with the live job
+                envelope while a page's own request is queued behind other
+                StarRocks-backed work.
 
         Yields:
             Data for each page as a DataFrame, timeseries, or dictionary.
@@ -377,6 +488,7 @@ class ExplorerAPIClient(BaseAPIClient):
             response = self.get_framework_data(
                 framework_id=framework_id,
                 fetch_all=True,
+                on_progress=on_progress,
             )
             if not response:
                 break

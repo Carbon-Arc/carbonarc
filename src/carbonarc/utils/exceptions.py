@@ -37,3 +37,27 @@ class RateLimitError(CarbonArcException):
 class InvalidConfigurationError(CarbonArcException):
     """Raised when the configuration is invalid."""
     pass
+
+
+class QueryJobFailedError(CarbonArcException):
+    """Raised when a polled query job (framework price/filters/buy/data
+    behind the poll=true job-queue contract) reaches state="failed"."""
+    pass
+
+
+class QueryJobCancelledError(CarbonArcException):
+    """Raised when a polled query job reaches state="cancelled" -- either
+    this caller's own ``cancel_query_job()`` or another caller/thread with
+    the same job_id."""
+    pass
+
+
+class QueryJobTimeoutError(CarbonArcException):
+    """Raised when ``poll_job_to_completion``'s optional ``max_wait_seconds``
+    elapses before the job reaches a terminal state. Client-side defense in
+    depth only: the server has its own bounds on how long a job can sit
+    queued or running before it self-evicts to state="failed", so this
+    should be rare in practice -- it exists for the case where the server
+    never responds with a terminal state at all (a future regression in
+    that server-side eviction, or a job stuck in an unanticipated way)."""
+    pass
