@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
 from carbonarc.utils.client import BaseAPIClient
 
@@ -19,7 +19,7 @@ class CatalogAPIClient(BaseAPIClient):
 
     def list_assets(
         self,
-        tier: Optional[Union[int, list]] = None,
+        tier: Optional[int] = None,
         provider_id: Optional[str] = None,
         category: Optional[str] = None,
         visibility: Optional[str] = None,
@@ -33,18 +33,26 @@ class CatalogAPIClient(BaseAPIClient):
         List approved IDO assets. Results are gated by the caller's plan_type.
 
         Args:
-            tier: Filter by asset tier (1, 2, or 3).
+            tier: Filter by a single asset tier (1, 2, or 3). The API takes one
+                tier per call; a list is serialized as repeated query params and
+                only the last value is applied.
             provider_id: Filter by provider UUID.
             category: Filter by data category.
-            visibility: Filter by visibility ('public', 'gated', 'locked').
+            visibility: Accepted for backwards compatibility but ignored by the
+                API — there is no visibility filter on the route. Use the 'gated'
+                flag on each returned asset instead.
             search: Case-insensitive title search.
             data_type: Filter by data type.
             geography: Filter by geography (exact match within array field).
             frequency: Filter by data frequency.
-            sort: Sort order — 'popularity' (vote count desc) or 'newest' (published_at desc).
+            sort: Sort order — 'popularity' (vote count desc) or 'newest' (publish_date desc).
 
         Returns:
-            Dict with 'assets' list and 'total' count.
+            Dict with 'assets' list and 'total' count. Each asset carries
+            'id', 'source_id', 'provider_id', 'provider_name', 'title', 'status',
+            'tier', 'is_new', 'is_premium', 'publish_date', 'last_validated_date',
+            'gated', 'cta' and a nested 'metadata' object. Vote counts are not
+            included — use get_vote_status() for those.
         """
         params = {k: v for k, v in {
             "tier": tier,
@@ -67,7 +75,10 @@ class CatalogAPIClient(BaseAPIClient):
             asset_id: UUID of the asset to retrieve.
 
         Returns:
-            Dict with asset detail including metadata, samples, and dictionary.
+            Dict with the same fields as a list_assets() asset, plus 'samples'
+            (list) and 'dictionary' (dict or None). Embargoed assets you are not
+            authorized for do not raise — they come back with 'gated' set to True,
+            an empty 'samples' list and a null 'dictionary'.
         """
         return self._get(f"{self.base_catalog_url}/assets/{asset_id}")
 
@@ -102,15 +113,21 @@ class CatalogAPIClient(BaseAPIClient):
         request_type: Literal["access", "diligence", "compliance"] = "access",
     ) -> dict:
         """
-        Submit an access request for a gated or locked asset.
-        Only valid for non-public assets. Raises 409 if an active request already exists.
+        Submit an access request for a gated asset.
+
+        Only valid for assets whose 'gated' flag is True. Requesting access to an
+        asset that is not gated returns 400. Repeat submissions for the same asset
+        are allowed — there is no duplicate-request guard.
 
         Args:
             asset_id: UUID of the asset to request access to.
             request_type: Type of request — 'access', 'diligence', or 'compliance'.
 
         Returns:
-            Dict with request id, status ('pending'), and routed_to.
+            Dict with 'id', 'asset_id', 'client_id', 'user_id', 'request_type',
+            'status' and 'routed_to'. The record is created as 'pending' and flips
+            to 'sent' once the notification to the Carbon Arc team goes out, which
+            is what you normally see. 'routed_to' is currently always 'carbon_arc'.
         """
         return self._post(
             f"{self.base_catalog_url}/assets/{asset_id}/request-access",
