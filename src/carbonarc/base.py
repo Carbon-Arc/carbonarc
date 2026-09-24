@@ -5,6 +5,7 @@ from carbonarc.explorer import ExplorerAPIClient
 from carbonarc.hub import HubAPIClient
 from carbonarc.client import PlatformAPIClient
 from carbonarc.ontology import OntologyAPIClient
+from carbonarc.prisms import PrismAPIClient
 from carbonarc.transcripts import TranscriptAPIClient
 
 
@@ -45,4 +46,5 @@ class CarbonArcClient:
         self.hub = HubAPIClient(token=token, host=host, version=version)
         self.client = PlatformAPIClient(token=token, host=host, version=version)
         self.ontology = OntologyAPIClient(token=token, host=host, version=version)
+        self.prisms = PrismAPIClient(token=token, host=host, version=version)
         self.transcripts = TranscriptAPIClient(token=token, host=host, version=version)
