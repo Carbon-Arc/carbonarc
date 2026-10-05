@@ -149,12 +149,31 @@ class PrismAPIClient(BaseAPIClient):
         }
         return self._get(self._base_url, params=params)
 
+    def get_prism_catalog(self) -> dict:
+        """Get the full prism catalog with your API token.
+
+        The same payload :meth:`get_public_prisms` returns, read through the
+        authenticated API instead of the public endpoint. It takes no
+        parameters and returns every live prism in one response, so prefer
+        :meth:`get_prism` or :meth:`get_prisms` when you want a single prism
+        or a filtered set.
+
+        Returns:
+            Dict with ``prisms``, ``arrays`` and ``tou``, exactly as described
+            on :meth:`get_public_prisms`. As there, the prisms in it do not
+            carry ``framework``; read a prism with :meth:`get_prism` or
+            :meth:`get_prisms` for that.
+        """
+        return self._get(f"{self._base_url}/catalog")
+
     def get_public_prisms(self) -> dict:
         """Get the public prism catalog.
 
         This endpoint needs no authentication and takes no parameters. It
         returns every live prism in one response, so prefer :meth:`get_prism`
         or :meth:`get_prisms` when you want a single prism or a filtered set.
+        :meth:`get_prism_catalog` returns the same payload through the
+        authenticated API.
 
         Returns:
             Dict with:
