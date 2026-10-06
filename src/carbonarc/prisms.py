@@ -1,5 +1,7 @@
 from typing import Optional
 
+import pandas as pd
+
 from carbonarc.utils.client import BaseAPIClient
 
 
@@ -45,7 +47,7 @@ class PrismAPIClient(BaseAPIClient):
             lags when upstream sources are behind.
 
             ``framework`` is the framework that produced all of it, ready
-            to purchase. See :meth:`get_prisms` for its shape and the one
+            to purchase. See :meth:`list_prisms` for its shape and the one
             field you may have to add first.
 
         Raises:
@@ -53,7 +55,7 @@ class PrismAPIClient(BaseAPIClient):
         """
         return self._get(f"{self._base_url}/{prism_id}")
 
-    def get_prisms(
+    def list_prisms(
         self,
         insight_id: Optional[int] = None,
         entity_id: Optional[int] = None,
@@ -62,8 +64,10 @@ class PrismAPIClient(BaseAPIClient):
         """Find prisms by the insight they compute or the entity they cover.
 
         Pass ``insight_id``, or ``entity_id`` (optionally narrowed by
-        ``entity_representation``), or both to intersect them. At least one is
-        required.
+        ``entity_representation``), or both to intersect them. With no
+        arguments this returns the full catalog (:meth:`get_prism_catalog`),
+        where prisms carry no ``framework``; the two shapes differ because
+        that is what the API serves on each path.
 
         **Expect a list of any length, including zero.** Several matches is the
         normal case: one insight is usually cut across more than one entity
@@ -147,14 +151,46 @@ class PrismAPIClient(BaseAPIClient):
             )
             if value is not None
         }
+        if not params:
+            return self.get_prism_catalog()
         return self._get(self._base_url, params=params)
+
+    get_prisms = list_prisms
+
+    def get_prism_catalog(self) -> dict:
+        """Get the full prism catalog with your API token.
+
+        The same payload :meth:`get_public_prisms` returns, read through the
+        authenticated API instead of the public endpoint. It takes no
+        parameters and returns every live prism in one response, so prefer
+        :meth:`get_prism` or :meth:`list_prisms` when you want a single prism
+        or a filtered set.
+
+        Returns:
+            Dict with ``prisms``, ``arrays`` and ``tou``, exactly as described
+            on :meth:`get_public_prisms`. As there, the prisms in it do not
+            carry ``framework``; read a prism with :meth:`get_prism` or
+            :meth:`list_prisms` for that.
+        """
+        return self._get(f"{self._base_url}/catalog")
+
+    def list_arrays(self) -> dict:
+        """Every live Array. Same objects as ``arrays`` in
+        :meth:`get_prism_catalog`; see :meth:`get_public_prisms` for the shape."""
+        return self._get(f"{self._base_url}/arrays")
+
+    def get_array(self, array_id: str) -> dict:
+        """One live Array by ``array_id``. Raises on 404 like :meth:`get_prism`."""
+        return self._get(f"{self._base_url}/arrays/{array_id}")
 
     def get_public_prisms(self) -> dict:
         """Get the public prism catalog.
 
         This endpoint needs no authentication and takes no parameters. It
         returns every live prism in one response, so prefer :meth:`get_prism`
-        or :meth:`get_prisms` when you want a single prism or a filtered set.
+        or :meth:`list_prisms` when you want a single prism or a filtered set.
+        :meth:`get_prism_catalog` returns the same payload through the
+        authenticated API.
 
         Returns:
             Dict with:
@@ -183,3 +219,34 @@ class PrismAPIClient(BaseAPIClient):
             current month.
         """
         return self._get(self._public_url)
+
+
+def prism_to_dataframe(prism: dict) -> pd.DataFrame:
+    """Tidy rows, one per (entity, series, period).
+
+    Columns: entity_id, entity_representation, entity_name, series, period,
+    value. ``period`` is the point's ``date`` (daily ``mtd_*`` series) or
+    ``month`` (monthly ``hist_*`` series)."""
+    rows = []
+    for entity in prism.get("entities", []):
+        for series in ("mtd_yoy", "mtd_share", "hist_yoy", "hist_share"):
+            for point in entity.get(series) or []:
+                rows.append(
+                    {
+                        "entity_id": entity.get("entity_id"),
+                        "entity_representation": entity.get("entity_representation"),
+                        "entity_name": entity.get("entity_name"),
+                        "series": series,
+                        "period": point.get("date") or point.get("month"),
+                        "value": point.get("value"),
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def array_to_dataframe(array: dict) -> pd.DataFrame:
+    """Tidy rows from ``level``: month, value, plus array_id and title."""
+    return pd.DataFrame(
+        {"array_id": array.get("array_id"), "title": array.get("title"), **point}
+        for point in array.get("level", [])
+    )
