@@ -36,15 +36,23 @@ class PlatformAPIClient(BaseAPIClient):
         """
         raise NotImplementedError("get_usage() has been deprecated and is not available in the API. Please use get_order_history() instead.")
     
-    def get_order_history(self) -> dict:
+    def get_order_history(self, page: int = 1, size: int = 100) -> dict:
         """
         Retrieve order history.
 
+        The response is paginated. Use ``total`` and ``pages`` to decide
+        whether more pages need to be fetched.
+
+        Args:
+            page: Page number (default 1).
+            size: Number of orders per page (default 100).
+
         Returns:
-            Dictionary of order history.
+            Dictionary with ``total``, ``page``, ``size``, ``pages`` and an
+            ``items`` list of orders.
         """
         url = f"{self.base_platform_url}/me/orders"
-        return self._get(url)
+        return self._get(url, params={"page": page, "size": size})
     
     def get_order_details(self, order_id: str) -> dict:
         """
