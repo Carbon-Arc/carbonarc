@@ -44,9 +44,6 @@ class OntologyAPIClient(BaseAPIClient):
         representation: Optional[List[str]] = None,
         domain: Optional[Union[str, List[str]]] = None,
         entity: Optional[List[Literal["brand", "company", "people", "location"]]] = None,
-        subject_ids: Optional[List[int]] = None,
-        topic_ids: Optional[List[int]] = None,
-        insight_types: Optional[List[Literal["metric", "event", "kpi", "marketshare", "cohort"]]] = None,
         insight_id: Optional[int] = None,
         event_id: Optional[int] = None,
         event_representation: Optional[str] = None,
@@ -64,9 +61,6 @@ class OntologyAPIClient(BaseAPIClient):
             representation: List of entity representations to filter by.
             domain: Entity domain(s) to filter by.
             entity: List of entity types to filter by.
-            subject_ids: List of subject IDs to filter by.
-            topic_ids: List of topic IDs to filter by.
-            insight_types: List of insight types to filter by.
             insight_id: Insight ID to filter by.
             event_id: Filter entities linked to this event ID.
             event_representation: Event representation to use with ``event_id``
@@ -89,12 +83,6 @@ class OntologyAPIClient(BaseAPIClient):
         }
         if search:
             params["search"] = search
-        if subject_ids:
-            params["subject_ids"] = subject_ids
-        if topic_ids:
-            params["topic_ids"] = topic_ids
-        if insight_types:
-            params["insight_types"] = insight_types
         if insight_id:
             params["insight_id"] = insight_id
         if event_id:
