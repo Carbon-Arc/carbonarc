@@ -31,8 +31,16 @@ class ValidationError(CarbonArcException):
 
 
 class RateLimitError(CarbonArcException):
-    """Raised when API rate limit is exceeded."""
-    pass
+    """Raised when API rate limit is exceeded (HTTP 429).
+
+    ``retry_after`` is the number of seconds the API asked the caller to wait,
+    taken from the ``Retry-After`` response header. It is ``None`` when the
+    header is absent or carries an HTTP-date rather than a number of seconds.
+    """
+
+    def __init__(self, message, status_code=None, response=None, retry_after=None):
+        super().__init__(message, status_code=status_code, response=response)
+        self.retry_after = retry_after
 
 class InvalidConfigurationError(CarbonArcException):
     """Raised when the configuration is invalid."""
