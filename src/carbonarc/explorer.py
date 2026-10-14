@@ -36,9 +36,9 @@ class ExplorerAPIClient(BaseAPIClient):
         Check the live status of a query job.
 
         A request to any of this client's StarRocks-backed methods
-        (:meth:`check_framework_quote`, :meth:`check_framework_price`,
-        :meth:`collect_framework_filters`, :meth:`buy_frameworks`,
-        :meth:`get_framework_data`) that queues
+        (:meth:`check_framework_quote`, :meth:`check_frameworks_quote`,
+        :meth:`check_framework_price`, :meth:`collect_framework_filters`,
+        :meth:`buy_frameworks`, :meth:`get_framework_data`) that queues
         behind other work reports its ``job_id`` to that method's own
         ``on_progress`` callback -- poll it independently with this method
         (e.g. from another thread, or after saving the id and coming back
@@ -323,6 +323,38 @@ class ExplorerAPIClient(BaseAPIClient):
             The framework's price.
         """
         return self.check_framework_quote(framework, on_progress).get("price", None)
+
+    def check_frameworks_quote(
+        self,
+        frameworks: List[dict],
+        on_progress: Optional[Callable[[dict], None]] = None,
+    ) -> dict:
+        """
+        Get the quote for several frameworks in one request.
+
+        Args:
+            frameworks: List of framework dictionaries.
+            on_progress: See :meth:`check_framework_quote`.
+
+        Returns:
+            ``total_price``, ``number_of_frameworks`` and ``frameworks``: one
+            entry per framework, in the order given, each with its ``price``
+            and ``used_rows_count`` (see :meth:`check_framework_quote`). The
+            API rejects the whole batch if any framework is invalid.
+        """
+        validated_frameworks = [
+            self._validate_framework(framework) for framework in frameworks
+        ]
+        url = f"{self.base_framework_url}/metadata"
+        body = {"frameworks": validated_frameworks}
+        return poll_job_to_completion(
+            initial=self._post(url, json=body, params={"poll": "true"}),
+            poll_status=self.get_query_job,
+            finalize=lambda job_id: self._post(
+                url, json=body, params={"poll": "true", "job_id": job_id}
+            ),
+            on_progress=on_progress,
+        )
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
         """
