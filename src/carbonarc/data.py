@@ -109,18 +109,20 @@ class DataAPIClient(BaseAPIClient):
 
         return file_path
 
-    def get_data_dictionary(self, 
+    def get_data_dictionary(self,
                             dataset_id: str,
-                            entity_topic_id: Optional[int] = None) -> dict:
+                            entity_topic_id: Optional[int] = None) -> list:
         """
         Get the data dictionary for a specific dataset from the Carbon Arc API.
-        
+
         Args:
             dataset_id (str): The identifier of the data to retrieve the data dictionary for.
             entity_topic_id (Optional[int]): The identifier of the entity topic to retrieve the data dictionary for. If not provided, all data dictionaries for the dataset will be returned.
-            
+
         Returns:
-            list: A list of dictionaries containing the data dictionary or data dictionaries for the specified dataset.    
+            list: One entry per topic in the dataset, each with entity_topic_id,
+                  label, notes, and a columns mapping of column name to column
+                  metadata.
         """
         endpoint = f"data/{dataset_id}/data-dictionary"
         url = f"{self.base_data_url}/{endpoint}"
