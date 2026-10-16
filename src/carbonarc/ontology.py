@@ -231,12 +231,29 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/entity/{entity_id}/insights"
         return self._get(url, params=params)
     
-    def get_entities_for_insight(self, insight_id: int) -> dict:
+    def get_entities_for_insight(
+        self,
+        insight_id: int,
+        page: int = 1,
+        size: int = 100,
+    ) -> dict:
         """
         Retrieve entities for a specific insight.
+
+        The endpoint is paginated and its response carries no total count, so a
+        full page means there are probably more entities to fetch.
+
+        Args:
+            insight_id: Insight ID.
+            page: Page number (default 1).
+            size: Number of entities per page (default 100).
+
+        Returns:
+            Dictionary with an ``entities`` list for the requested page.
         """
+        params = {"page": page, "size": size}
         url = f"{self.base_ontology_url}/insight/{insight_id}/entities"
-        return self._get(url)
+        return self._get(url, params=params)
     
     def get_subjects(self) -> dict:
         """
@@ -268,7 +285,10 @@ class OntologyAPIClient(BaseAPIClient):
         
     def get_ontology_version(self) -> dict:
         """
-        Retrieve the current ontology version.
+        Retrieve the available ontology versions.
+
+        Alias of :meth:`get_ontology_versions` — both call the same endpoint and
+        return ``{"versions": [...]}``, not a single version.
         """
         url = f"{self.base_ontology_url}/ontology-versions"
         return self._get(url)
@@ -283,6 +303,9 @@ class OntologyAPIClient(BaseAPIClient):
     def get_ontology_versions(self) -> Dict[str, Any]:
         """
         Retrieve the available ontology versions.
+
+        Returns:
+            Dictionary with a ``versions`` list of version strings.
         """
         url = f"{self.base_ontology_url}/ontology-versions"
         return self._get(url)
