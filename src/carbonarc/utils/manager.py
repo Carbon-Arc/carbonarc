@@ -1,5 +1,6 @@
 import logging
 from http import HTTPStatus
+from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -71,22 +72,35 @@ class HttpRequestManager:
             self.request_session.get(url, auth=self.auth_token, stream=True, **kwargs)
         )
 
+    @staticmethod
+    def _detail_from(response: requests.Response) -> Optional[str]:
+        """The API's ``detail`` string, when the body carries one."""
+        try:
+            body = response.json()
+        except ValueError:
+            return None
+        if isinstance(body, dict):
+            return body.get("detail")
+        return None
+
     def _raise_for_status(self, response: requests.Response) -> requests.Response:
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == HTTPStatus.CONFLICT:
-                raise AuthenticationError("Conflict error")
+                # Carries the same context as the 403 branch: without
+                # status_code/response, a caller inspecting the exception
+                # cannot tell a conflict apart from any other
+                # AuthenticationError, and the API's explanation of what
+                # conflicted is lost.
+                raise AuthenticationError(
+                    self._detail_from(e.response) or "Conflict error",
+                    status_code=e.response.status_code,
+                    response=e.response,
+                ) from e
             if e.response.status_code == HTTPStatus.FORBIDDEN:
-                detail: str | None = None
-                try:
-                    body = e.response.json()
-                    if isinstance(body, dict):
-                        detail = body.get("detail")
-                except ValueError:
-                    pass
                 raise ForbiddenError(
-                    detail or "Forbidden",
+                    self._detail_from(e.response) or "Forbidden",
                     status_code=e.response.status_code,
                     response=e.response,
                 ) from e
