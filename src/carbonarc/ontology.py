@@ -231,12 +231,41 @@ class OntologyAPIClient(BaseAPIClient):
         url = f"{self.base_ontology_url}/entity/{entity_id}/insights"
         return self._get(url, params=params)
     
-    def get_entities_for_insight(self, insight_id: int) -> dict:
+    def get_entities_for_insight(
+        self,
+        insight_id: int,
+        entity_representation: Optional[str] = None,
+        page: Optional[int] = None,
+        size: Optional[int] = None,
+    ) -> dict:
         """
         Retrieve entities for a specific insight.
+
+        The response's ``available_entity_representations`` lists the
+        representations you can request every entity of for this insight. Pass
+        one of them to ``client.explorer.build_framework`` as ``entities``:
+
+            reps = client.ontology.get_entities_for_insight(453)["available_entity_representations"]
+            framework = client.explorer.build_framework(reps[0], 453, filters)
+
+        Args:
+            insight_id: Insight ID.
+            entity_representation: Only return entities of this representation.
+            page: Page number.
+            size: Entities per page.
+
+        Returns:
+            Dictionary with ``entities`` and ``available_entity_representations``.
         """
+        params: Dict[str, Any] = {}
+        if entity_representation:
+            params["entity_representation"] = entity_representation
+        if page is not None:
+            params["page"] = page
+        if size is not None:
+            params["size"] = size
         url = f"{self.base_ontology_url}/insight/{insight_id}/entities"
-        return self._get(url)
+        return self._get(url, params=params)
     
     def get_subjects(self) -> dict:
         """
