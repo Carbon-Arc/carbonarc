@@ -36,7 +36,8 @@ class ExplorerAPIClient(BaseAPIClient):
         Check the live status of a query job.
 
         A request to any of this client's StarRocks-backed methods
-        (:meth:`check_framework_price`, :meth:`collect_framework_filters`,
+        (:meth:`check_framework_quote`, :meth:`check_frameworks_quote`,
+        :meth:`check_framework_price`, :meth:`collect_framework_filters`,
         :meth:`buy_frameworks`, :meth:`get_framework_data`) that queues
         behind other work reports its ``job_id`` to that method's own
         ``on_progress`` callback -- poll it independently with this method
@@ -271,13 +272,13 @@ class ExplorerAPIClient(BaseAPIClient):
             on_progress=on_progress,
         )
     
-    def check_framework_price(
+    def check_framework_quote(
         self,
         framework: dict,
         on_progress: Optional[Callable[[dict], None]] = None,
     ) -> dict:
         """
-        Check the price of a framework.
+        Get the quote for a framework: its price and the rows it would return.
 
         Args:
             framework: Framework dictionary.
@@ -288,12 +289,16 @@ class ExplorerAPIClient(BaseAPIClient):
                 a request that never queues.
 
         Returns:
-            The framework's price.
+            The quote: ``price``, ``used_rows_count``, ``valid`` and
+            ``message``. ``used_rows_count`` is a pre-purchase estimate of
+            the rows the framework returns today, so the final output may
+            differ. It is ``None`` when the count was skipped because it
+            cannot change the price, which is not the same as zero rows.
         """
         framework = self._validate_framework(framework)
         url = f"{self.base_framework_url}/order"
         body = {"framework": framework}
-        response = poll_job_to_completion(
+        return poll_job_to_completion(
             initial=self._post(url, json=body, params={"poll": "true"}),
             poll_status=self.get_query_job,
             finalize=lambda job_id: self._post(
@@ -301,7 +306,55 @@ class ExplorerAPIClient(BaseAPIClient):
             ),
             on_progress=on_progress,
         )
-        return response.get("price", None)
+
+    def check_framework_price(
+        self,
+        framework: dict,
+        on_progress: Optional[Callable[[dict], None]] = None,
+    ) -> Optional[float]:
+        """
+        Check the price of a framework.
+
+        Args:
+            framework: Framework dictionary.
+            on_progress: See :meth:`check_framework_quote`.
+
+        Returns:
+            The framework's price.
+        """
+        return self.check_framework_quote(framework, on_progress).get("price", None)
+
+    def check_frameworks_quote(
+        self,
+        frameworks: List[dict],
+        on_progress: Optional[Callable[[dict], None]] = None,
+    ) -> dict:
+        """
+        Get the quote for several frameworks in one request.
+
+        Args:
+            frameworks: List of framework dictionaries.
+            on_progress: See :meth:`check_framework_quote`.
+
+        Returns:
+            ``total_price``, ``number_of_frameworks`` and ``frameworks``: one
+            entry per framework, in the order given, each with its ``price``
+            and ``used_rows_count`` (see :meth:`check_framework_quote`). The
+            API rejects the whole batch if any framework is invalid.
+        """
+        validated_frameworks = [
+            self._validate_framework(framework) for framework in frameworks
+        ]
+        url = f"{self.base_framework_url}/metadata"
+        body = {"frameworks": validated_frameworks}
+        return poll_job_to_completion(
+            initial=self._post(url, json=body, params={"poll": "true"}),
+            poll_status=self.get_query_job,
+            finalize=lambda job_id: self._post(
+                url, json=body, params={"poll": "true", "job_id": job_id}
+            ),
+            on_progress=on_progress,
+        )
 
     def collect_framework_filter_options(self, framework: dict, filter_key: str) -> dict:
         """
