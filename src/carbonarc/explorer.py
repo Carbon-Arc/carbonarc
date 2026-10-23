@@ -85,7 +85,11 @@ class ExplorerAPIClient(BaseAPIClient):
         Args:
             entities: List of entity dicts (with "carc_id" and "representation") or a
                 representation string. Pass ``None`` for an event-only query (see
-                ``events``).
+                ``events``). A representation string requests every entity of
+                that type, and must be one of the insight's
+                ``available_entity_representations`` (see
+                ``client.ontology.get_entities_for_insight``); any other is
+                refused when the framework is priced.
             insight: Insight ID.
             filters: Filters to apply.
             aggregate: Aggregation method ("sum", "mean", or "count_distinct").
