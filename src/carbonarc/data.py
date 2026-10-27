@@ -163,19 +163,29 @@ class DataAPIClient(BaseAPIClient):
     def get_graphs(
         self,
     ) -> dict:
+        """
+        Retrieve the data graphs available to the caller.
+
+        Returns:
+            dict: A paginated envelope with the graphs under ``datasources``,
+                alongside ``page``, ``size`` and ``total_pages`` - the same
+                shape :meth:`get_datasets` returns.
+        """
         url = f"{self.base_data_url}/graph"
 
         return self._get(url)
 
     def get_graph_information(self, graph_id: str) -> dict:
         """
-        Get the information for a specific dataset from the Carbon Arc API.
-        
+        Get the information for a specific graph from the Carbon Arc API.
+
         Args:
-            data_identifier (str): The identifier of the data to retrieve information for.
-            
+            graph_id (str): The identifier of the graph to retrieve information for.
+
         Returns:
-            dict: A dictionary containing the information for the specified dataset.
+            dict: The same paginated envelope :meth:`get_graphs` returns, with
+                the requested graph as the single entry under ``datasources``.
+                ``datasources`` is empty when no graph matches ``graph_id``.
         """
         endpoint = f"graph/{graph_id}"
         url = f"{self.base_data_url}/{endpoint}"
