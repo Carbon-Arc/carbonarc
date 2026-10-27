@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
 from carbonarc.utils.client import BaseAPIClient
 
@@ -19,10 +19,9 @@ class CatalogAPIClient(BaseAPIClient):
 
     def list_assets(
         self,
-        tier: Optional[Union[int, list]] = None,
+        tier: Optional[int] = None,
         provider_id: Optional[str] = None,
         category: Optional[str] = None,
-        visibility: Optional[str] = None,
         search: Optional[str] = None,
         data_type: Optional[str] = None,
         geography: Optional[str] = None,
@@ -36,7 +35,6 @@ class CatalogAPIClient(BaseAPIClient):
             tier: Filter by asset tier (1, 2, or 3).
             provider_id: Filter by provider UUID.
             category: Filter by data category.
-            visibility: Filter by visibility ('public', 'gated', 'locked').
             search: Case-insensitive title search.
             data_type: Filter by data type.
             geography: Filter by geography (exact match within array field).
@@ -50,7 +48,6 @@ class CatalogAPIClient(BaseAPIClient):
             "tier": tier,
             "provider_id": provider_id,
             "category": category,
-            "visibility": visibility,
             "search": search,
             "data_type": data_type,
             "geography": geography,
@@ -103,7 +100,8 @@ class CatalogAPIClient(BaseAPIClient):
     ) -> dict:
         """
         Submit an access request for a gated or locked asset.
-        Only valid for non-public assets. Raises 409 if an active request already exists.
+        Only valid for non-public assets. Repeat submissions for the same asset
+        are allowed — each one is logged as a new request.
 
         Args:
             asset_id: UUID of the asset to request access to.
