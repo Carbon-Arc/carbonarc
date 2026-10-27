@@ -105,6 +105,19 @@ _EVALUATION_FIELD_ALIASES = {
         "evaluation_duration_months",
         "trial_duration_months",
     ),
+    # Pre-shift snapshots, populated once an admin moves the window.
+    "original_evaluation_start_date": (
+        "original_evaluation_start_date",
+        "original_trial_start_date",
+    ),
+    "original_evaluation_end_date": (
+        "original_evaluation_end_date",
+        "original_trial_end_date",
+    ),
+    "original_evaluation_duration_months": (
+        "original_evaluation_duration_months",
+        "original_trial_duration_months",
+    ),
 }
 
 # Legacy → current key names, derived from the alias table so the two can
@@ -616,7 +629,9 @@ class BlockAPIClient(BaseAPIClient):
         if accepted_block_tou_version_id is not None:
             body["accepted_block_tou_version_id"] = accepted_block_tou_version_id
         return _absolutize_tear_sheet(
-            self._post(f"{self._v1_url}/requests", json=body),
+            _normalize_evaluation_keys(
+                self._post(f"{self._v1_url}/requests", json=body)
+            ),
             self._cams_host,
         )
 
@@ -626,12 +641,14 @@ class BlockAPIClient(BaseAPIClient):
         Returns:
             Dict with ``requests`` (list of request rows), ``total``, and
             ``users_by_email`` (lookup table of requestor / approver details).
+            Evaluation-period fields on each row are named ``evaluation_*``,
+            matching :meth:`dataset_status` and :meth:`request_history`.
         """
         response = self._get(f"{self._v1_url}/requests")
         # The server returns the rows under ``items``; rename to
         # ``requests`` for the public SDK surface.
         response["requests"] = [
-            _absolutize_tear_sheet(r, self._cams_host)
+            _absolutize_tear_sheet(_normalize_evaluation_keys(r), self._cams_host)
             for r in (response.pop("items", None) or [])
         ]
         return response
@@ -639,7 +656,9 @@ class BlockAPIClient(BaseAPIClient):
     def get_request(self, request_id: str) -> dict:
         """Fetch a single Block request by UUID."""
         return _absolutize_tear_sheet(
-            self._get(f"{self._v1_url}/requests/{request_id}"),
+            _normalize_evaluation_keys(
+                self._get(f"{self._v1_url}/requests/{request_id}")
+            ),
             self._cams_host,
         )
 
