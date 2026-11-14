@@ -1,0 +1,13 @@
+{
+  "scored": true,
+  "note": null,
+  "scores": {
+    "6f1c2b9e-0d5a-4a43-9a4e-1b2f3c4d5e01:transactions": {
+      "coverage": 0.92,
+      "score": 0.41,
+      "suggested": true,
+      "nEntities": 22
+    }
+  },
+  "lagMonths": 12
+}

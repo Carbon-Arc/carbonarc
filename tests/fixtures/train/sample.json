@@ -1,0 +1,20 @@
+{
+  "frameworkId": "6f1c2b9e-0d5a-4a43-9a4e-1b2f3c4d5e01",
+  "insightColumn": "card_spend",
+  "dateColumn": "date",
+  "totalRows": 2208,
+  "columns": ["date", "entity_name", "card_spend"],
+  "rows": [{"date": "2026-09-01", "entity_name": "Walmart", "card_spend": 1234.5}],
+  "series": [
+    {
+      "entityId": 101,
+      "entityName": "Walmart",
+      "metric": "card_spend",
+      "points": [{"month": "2026-08", "value": 1200.0}, {"month": "2026-09", "value": 1234.5}]
+    }
+  ],
+  "shapes": [{"seriesBy": "company", "series": 24, "note": null, "splits": []}],
+  "seriesBy": "company",
+  "dictionaryDatasetId": "CA0056",
+  "dictionaryTopicId": 7
+}
