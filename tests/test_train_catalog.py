@@ -109,6 +109,17 @@ def test_frameworks_to_dataframe_rights_refused_names_supplier():
     )
 
 
+def test_frameworks_to_dataframe_blank_note_is_trainable():
+    framework = dict(
+        load_fixture("train/frameworks.json")["frameworks"][0], trainingNote=""
+    )
+
+    df = frameworks_to_dataframe([framework])
+
+    assert bool(df.loc[0, "trainable"]) is True
+    assert df.loc[0, "reason"] is None
+
+
 def test_frameworks_to_dataframe_empty_keeps_columns(train_session):
     client, _ = train_session
     df = client.train.frameworks_to_dataframe([])
@@ -139,12 +150,33 @@ def test_get_framework_sample_unknown_id_raises_not_found(train_session):
         client.train.get_framework_sample("x")
 
 
+def test_not_found_message_has_one_period(train_session):
+    client, session = train_session
+    session.queue(404, {"error_code": "FW-404", "detail": "Framework x not found."})
+
+    with pytest.raises(TrainNotFound) as exc:
+        client.train.get_framework_sample("x")
+
+    assert str(exc.value).startswith("Framework x not found. It doesn't exist")
+
+
+def test_500_without_a_code_is_a_platform_error(train_session):
+    client, session = train_session
+    session.queue(500, {"detail": None})
+
+    with pytest.raises(TrainPlatformError, match=r"failed \(HTTP 500\)"):
+        client.train.list_frameworks()
+
+
 def test_get_features_sends_camelcase_body(train_session):
     client, session = train_session
     session.queue(body=load_fixture("train/features.json"))
 
     result = client.train.get_features(
-        [FW], target=f"{FW}:card_spend", window_start="2019-01", cutoff="2025-09",
+        [FW],
+        target=f"{FW}:card_spend",
+        window_start="2019-01",
+        cutoff="2025-09",
         horizon=3,
     )
 
@@ -180,40 +212,82 @@ def test_get_suggestions(train_session):
 @pytest.mark.parametrize(
     "status, body, headers, expected",
     [
-        (403, {"error_code": "TRAIN_RIGHTS", "detail": "No training grant."}, None, NoTrainingGrant),
-        (400, {"error_code": "TRAIN_DATA", "detail": "Too few series."}, None, NotEnoughData),
-        (500, {"error_code": "TRAIN_PLATFORM", "detail": "Our side."}, None, TrainPlatformError),
-        (503, {"error_code": "TRAIN_BUSY", "detail": "Busy."}, {"Retry-After": "120"}, TrainBusy),
+        (
+            403,
+            {"error_code": "TRAIN_RIGHTS", "detail": "No training grant."},
+            None,
+            NoTrainingGrant,
+        ),
+        (
+            400,
+            {"error_code": "TRAIN_DATA", "detail": "Too few series."},
+            None,
+            NotEnoughData,
+        ),
+        (
+            500,
+            {"error_code": "TRAIN_PLATFORM", "detail": "Our side."},
+            None,
+            TrainPlatformError,
+        ),
+        (
+            503,
+            {"error_code": "TRAIN_BUSY", "detail": "Busy."},
+            {"Retry-After": "120"},
+            TrainBusy,
+        ),
         (
             409,
-            {"error_code": "TRAIN_DUPLICATE", "detail": {"message": "Already running.", "existingRunId": "run_1"}},
+            {
+                "error_code": "TRAIN_DUPLICATE",
+                "detail": {"message": "Already running.", "existingRunId": "run_1"},
+            },
             None,
             TrainRunExists,
         ),
     ],
 )
-def test_refusal_codes_map_to_exceptions(train_session, status, body, headers, expected):
+def test_refusal_codes_map_to_exceptions(
+    train_session, status, body, headers, expected
+):
     client, session = train_session
     session.queue(status, body, headers)
 
     with pytest.raises(expected) as exc:
-        client.train.get_features([FW], target="t", window_start="2019-01", cutoff="2025-09")
+        client.train.get_features(
+            [FW], target="t", window_start="2019-01", cutoff="2025-09"
+        )
 
     assert exc.value.status_code == status
     assert exc.value.error_code == body["error_code"]
-    message = body["detail"] if isinstance(body["detail"], str) else body["detail"]["message"]
+    message = (
+        body["detail"] if isinstance(body["detail"], str) else body["detail"]["message"]
+    )
     assert str(exc.value) == message
 
 
 def test_duplicate_and_busy_carry_their_extras(train_session):
     client, session = train_session
-    session.queue(409, {"error_code": "TRAIN_DUPLICATE", "detail": "Already running.", "existingRunId": "run_1"})
-    session.queue(503, {"error_code": "TRAIN_BUSY", "detail": "Busy."}, {"Retry-After": "120"})
+    session.queue(
+        409,
+        {
+            "error_code": "TRAIN_DUPLICATE",
+            "detail": "Already running.",
+            "existingRunId": "run_1",
+        },
+    )
+    session.queue(
+        503, {"error_code": "TRAIN_BUSY", "detail": "Busy."}, {"Retry-After": "120"}
+    )
 
     with pytest.raises(TrainRunExists) as dup:
-        client.train.get_features([FW], target="t", window_start="2019-01", cutoff="2025-09")
+        client.train.get_features(
+            [FW], target="t", window_start="2019-01", cutoff="2025-09"
+        )
     with pytest.raises(TrainBusy) as busy:
-        client.train.get_features([FW], target="t", window_start="2019-01", cutoff="2025-09")
+        client.train.get_features(
+            [FW], target="t", window_start="2019-01", cutoff="2025-09"
+        )
 
     assert dup.value.existing_run_id == "run_1"
     assert busy.value.retry_after == 120

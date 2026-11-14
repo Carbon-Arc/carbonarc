@@ -287,7 +287,7 @@ def _refusal(response: requests.Response, has_id: bool) -> Optional[TrainError]:
     if response.status_code == HTTPStatus.NOT_FOUND:
         if has_id:
             return TrainNotFound(
-                (message or "Not found")
+                (message or "Not found").rstrip(".")
                 + ". It doesn't exist, isn't yours, or Train isn't enabled"
                 " for this account.",
                 status_code=response.status_code,
@@ -312,7 +312,7 @@ def _refusal(response: requests.Response, has_id: bool) -> Optional[TrainError]:
     kwargs: Dict[str, Any] = dict(
         status_code=response.status_code, response=response, error_code=code
     )
-    message = message or f"Train refused the request (HTTP {response.status_code})"
+    message = message or f"The Train request failed (HTTP {response.status_code})"
     if cls is TrainRunExists:
         kwargs["existing_run_id"] = body.get("existingRunId") or extra.get(
             "existingRunId"
@@ -346,7 +346,8 @@ def _not_trainable_reason(framework: dict) -> Optional[str]:
             f"{supplier}'s terms don't allow training a model on it. "
             "You can still query and chart it."
         )
-    return framework.get("trainingNote")
+    # Blank counts as no note, as on the page (``canSelect`` reads it falsy).
+    return framework.get("trainingNote") or None
 
 
 _FRAMEWORK_COLUMNS = [
