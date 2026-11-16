@@ -119,4 +119,6 @@ class TrainBusy(TrainError):
 
 
 class TrainPlatformError(TrainError):
-    """Something failed on Carbon Arc's side (HTTP 500)."""
+    """Something failed on Carbon Arc's side: usually HTTP 500, or a 403 when
+    the service that checks training grants can't be reached. Not about your
+    data or rights: try again shortly."""

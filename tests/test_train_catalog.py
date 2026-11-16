@@ -62,7 +62,10 @@ def test_list_frameworks_warns_when_capped(train_session):
 
 def test_list_frameworks_without_train_raises_not_enabled(train_session):
     client, session = train_session
-    session.queue(404, {"error_code": "FW-404", "detail": "train catalog not found"})
+    session.queue(
+        404,
+        {"error_code": "FW-404", "detail": "Object not found: train catalog not found"},
+    )
 
     with pytest.raises(TrainNotEnabled) as exc:
         client.train.list_frameworks()
@@ -144,7 +147,10 @@ def test_get_framework_sample(train_session):
 
 def test_get_framework_sample_unknown_id_raises_not_found(train_session):
     client, session = train_session
-    session.queue(404, {"error_code": "FW-404", "detail": "framework x not found"})
+    session.queue(
+        404,
+        {"error_code": "FW-404", "detail": "Object not found: framework x not found"},
+    )
 
     with pytest.raises(TrainNotFound, match="isn't enabled for this account"):
         client.train.get_framework_sample("x")
@@ -152,12 +158,17 @@ def test_get_framework_sample_unknown_id_raises_not_found(train_session):
 
 def test_not_found_message_has_one_period(train_session):
     client, session = train_session
-    session.queue(404, {"error_code": "FW-404", "detail": "Framework x not found."})
+    session.queue(
+        404,
+        {"error_code": "FW-404", "detail": "Object not found: Framework x not found."},
+    )
 
     with pytest.raises(TrainNotFound) as exc:
         client.train.get_framework_sample("x")
 
-    assert str(exc.value).startswith("Framework x not found. It doesn't exist")
+    assert str(exc.value).startswith(
+        "Object not found: Framework x not found. It doesn't exist"
+    )
 
 
 def test_500_without_a_code_is_a_platform_error(train_session):
@@ -214,19 +225,33 @@ def test_get_suggestions(train_session):
     [
         (
             403,
-            {"error_code": "TRAIN_RIGHTS", "detail": "No training grant."},
+            {
+                "error_code": "TRAIN_RIGHTS",
+                "detail": "Authorization error: No training grant.",
+            },
             None,
             NoTrainingGrant,
         ),
         (
             400,
-            {"error_code": "TRAIN_DATA", "detail": "Too few series."},
+            {"error_code": "TRAIN_DATA", "detail": "Validation error: Too few series."},
             None,
             NotEnoughData,
         ),
         (
             500,
             {"error_code": "TRAIN_PLATFORM", "detail": "Our side."},
+            None,
+            TrainPlatformError,
+        ),
+        (
+            # The rights service couldn't be reached: a 403, but not a refusal
+            # of rights. The code wins over the status (contract, PRO-5784).
+            403,
+            {
+                "error_code": "TRAIN_PLATFORM",
+                "detail": "Authorization error: Couldn't check training rights.",
+            },
             None,
             TrainPlatformError,
         ),
@@ -240,7 +265,10 @@ def test_get_suggestions(train_session):
             409,
             {
                 "error_code": "TRAIN_DUPLICATE",
-                "detail": {"message": "Already running.", "existingRunId": "run_1"},
+                "detail": {
+                    "message": "Conflict error: Already running.",
+                    "existingRunId": "run_1",
+                },
             },
             None,
             TrainRunExists,
@@ -272,7 +300,7 @@ def test_duplicate_and_busy_carry_their_extras(train_session):
         409,
         {
             "error_code": "TRAIN_DUPLICATE",
-            "detail": "Already running.",
+            "detail": "Conflict error: Already running.",
             "existingRunId": "run_1",
         },
     )

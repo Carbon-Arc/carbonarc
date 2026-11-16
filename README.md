@@ -71,7 +71,7 @@ Methods return the API's JSON with its keys as sent (camelCase). A refusal raise
 | `NotEnoughData` | Too few series, a window too short, or a horizon too long. |
 | `TrainRunExists` | You already have a run of this config; `existing_run_id` is its id. |
 | `TrainBusy` | Every training machine is busy; `retry_after` says how long to wait. |
-| `TrainPlatformError` | Something failed on Carbon Arc's side. |
+| `TrainPlatformError` | Something failed on Carbon Arc's side, such as the grant check being unreachable. Try again shortly. |
 
 ## Resources
 
