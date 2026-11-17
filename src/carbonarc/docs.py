@@ -1,3 +1,4 @@
+import hashlib
 import io
 import os
 import posixpath
@@ -7,11 +8,20 @@ from typing import Callable, Dict, Optional
 from urllib.parse import quote
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from carbonarc.utils.client import BaseAPIClient
 
 SECTIONS = ("platform", "reference", "developers", "tutorials")
-ASSET_TIMEOUT_SECONDS = 60
+TIMEOUT_SECONDS = 60
+# Each image or PDF request retries timeouts, lost connections and 429/5xx.
+ASSET_RETRY = Retry(
+    total=3,
+    backoff_factor=1,
+    status_forcelist=(429, 500, 502, 503, 504),
+    raise_on_status=False,
+)
 
 
 class DocsAPIClient(BaseAPIClient):
@@ -50,7 +60,7 @@ class DocsAPIClient(BaseAPIClient):
             images (``static/img/...``) and PDFs (``static/pdf/...``) the docs
             reference, which are not in the bundle.
         """
-        return self._get(f"{self.base_docs_url}/manifest")
+        return self._get(f"{self.base_docs_url}/manifest", timeout=TIMEOUT_SECONDS)
 
     def get_all(self) -> bytes:
         """
@@ -65,7 +75,7 @@ class DocsAPIClient(BaseAPIClient):
         Raises:
             requests.exceptions.HTTPError: If the request fails.
         """
-        return self._stream(f"{self.base_docs_url}/bundle").content
+        return self._stream(f"{self.base_docs_url}/bundle", timeout=TIMEOUT_SECONDS).content
 
     def download_all(
         self,
@@ -83,7 +93,9 @@ class DocsAPIClient(BaseAPIClient):
         online. ``include_images`` also saves the images the docs use (~500 MB)
         under ``<directory>/static/img/``, and ``include_pdfs`` the PDF reports
         they link to (~120 MB) under ``<directory>/static/pdf/``; links to saved
-        files point at the local copies, so they open offline.
+        files point at the local copies, so they open offline. Files already
+        saved at the published size are not downloaded again, so rerunning a
+        failed download picks up where it stopped.
 
         Args:
             directory: The folder to write into. Defaults to the current
@@ -95,6 +107,7 @@ class DocsAPIClient(BaseAPIClient):
             str: The absolute path of ``directory``.
 
         Raises:
+            ValueError: If a zip or manifest path would land outside ``directory``.
             requests.exceptions.HTTPError: If a request fails.
             OSError: If there are file system errors (permissions, disk space, etc.).
         """
@@ -124,7 +137,8 @@ class DocsAPIClient(BaseAPIClient):
             str: The absolute path of ``directory``.
 
         Raises:
-            ValueError: If ``folder`` is not one of the four sections.
+            ValueError: If ``folder`` is not one of the four sections, or a zip or
+                manifest path would land outside ``directory``.
             requests.exceptions.HTTPError: If a request fails.
             OSError: If there are file system errors (permissions, disk space, etc.).
         """
@@ -154,18 +168,29 @@ class DocsAPIClient(BaseAPIClient):
         )
         saved: Dict[str, str] = {}  # site URL -> local static/... path
         if asset_dirs:
+            manifest = self.get_manifest()
+            bundle_sha256 = manifest.get("bundle", {}).get("sha256")
+            if bundle_sha256 and bundle_sha256 != hashlib.sha256(bundle_bytes).hexdigest():
+                self._logger.warning(
+                    "The docs were republished during this download, so some image and "
+                    "PDF links may still point at docs.carbonarc.ai. Download again to fix."
+                )
             assets = [
                 asset
-                for asset in self.get_manifest().get("assets", [])
+                for asset in manifest.get("assets", [])
                 if asset.get("path", "").startswith(asset_dirs)
                 and (folder is None or folder in asset.get("sections", []))
             ]
             # Public files on the docs site: a separate session, so no API token.
             with requests.Session() as session:
+                session.mount("https://", HTTPAdapter(max_retries=ASSET_RETRY))
+                session.mount("http://", HTTPAdapter(max_retries=ASSET_RETRY))
                 for asset in assets:
-                    response = session.get(asset["url"], timeout=ASSET_TIMEOUT_SECONDS)
-                    response.raise_for_status()
-                    _write_file(output_dir, asset["path"], response.content)
+                    path = _local_path(output_dir, asset["path"])
+                    if not (os.path.isfile(path) and os.path.getsize(path) == asset.get("size")):
+                        response = session.get(asset["url"], timeout=TIMEOUT_SECONDS)
+                        response.raise_for_status()
+                        _write_file(output_dir, asset["path"], response.content)
                     saved[asset["url"]] = asset["path"]
 
         link_locally = _local_linker(saved) if saved else None
@@ -197,11 +222,16 @@ def _local_linker(saved: Dict[str, str]) -> Callable[[bytes, str], bytes]:
     return link_locally
 
 
-def _write_file(output_dir: str, relative_path: str, data: bytes) -> None:
+def _local_path(output_dir: str, relative_path: str) -> str:
     path = os.path.abspath(os.path.join(output_dir, relative_path))
     # Reject zip or manifest paths ("../x", "/etc/x") that escape output_dir.
     if path == output_dir or os.path.commonpath([output_dir, path]) != output_dir:
         raise ValueError(f"Refusing to write outside {output_dir}: {relative_path!r}")
+    return path
+
+
+def _write_file(output_dir: str, relative_path: str, data: bytes) -> None:
+    path = _local_path(output_dir, relative_path)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "wb") as f:
         f.write(data)
