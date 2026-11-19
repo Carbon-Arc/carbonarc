@@ -15,7 +15,7 @@ from carbonarc.utils.exceptions import (
     TrainPlatformError,
     TrainRunExists,
 )
-from tests.conftest import load_fixture
+from tests.conftest import load_fixture, make_response
 
 FW = "6f1c2b9e-0d5a-4a43-9a4e-1b2f3c4d5e01"
 
@@ -33,7 +33,7 @@ def test_list_frameworks_returns_the_list(train_session):
     assert len(frameworks) == 3
     method, url, kwargs = session.calls[0]
     assert (method, url) == ("GET", "https://api.test/v2/train/frameworks")
-    assert kwargs["params"] == {}
+    assert kwargs["params"] == {"trainable": "true"}
 
 
 def test_list_frameworks_search_and_ids(train_session):
@@ -44,10 +44,60 @@ def test_list_frameworks_search_and_ids(train_session):
     client.train.list_frameworks(search="card")
     client.train.list_frameworks(framework_ids=[FW])
 
-    assert session.calls[0][2]["params"] == {"q": "card"}
+    assert session.calls[0][2]["params"] == {"q": "card", "trainable": "true"}
+    # By id lists what it asks for, trainable or not.
     assert session.calls[1][2]["params"] == {"ids": [FW]}
     with pytest.raises(ValueError):
         client.train.list_frameworks(search="card", framework_ids=[FW])
+
+
+def test_list_frameworks_include_untrainable_sends_no_filter(train_session):
+    client, session = train_session
+    session.queue(body=load_fixture("train/frameworks.json"))
+
+    client.train.list_frameworks(include_untrainable=True)
+
+    assert session.calls[0][2]["params"] == {}
+
+
+def test_list_frameworks_warns_what_it_left_out(train_session):
+    client, session = train_session
+    catalog = load_fixture("train/frameworks.json")
+    catalog["leftOutTotal"] = 3
+    catalog["leftOut"] = [
+        {
+            "reason": "This data has no training grant yet. You can still query and chart it.",
+            "frameworks": [{"id": "a", "name": "A"}, {"id": "b", "name": "B"}],
+        },
+        {
+            "reason": "nothing in it Train can forecast.",
+            "frameworks": [{"id": "c", "name": "C"}],
+        },
+    ]
+    session.queue(body=catalog)
+
+    with pytest.warns(UserWarning) as caught:
+        client.train.list_frameworks()
+
+    message = str(caught[0].message)
+    assert message.startswith(
+        "Left out 3 frameworks Train can't train on. "
+        "Pass include_untrainable=True to list them."
+    )
+    assert "\n- 2: This data has no training grant yet." in message
+    assert "\n- 1: nothing in it Train can forecast." in message
+
+
+def test_list_frameworks_nothing_left_out_no_warning(train_session, recwarn):
+    client, session = train_session
+    catalog = load_fixture("train/frameworks.json")
+    catalog["leftOutTotal"] = 0
+    catalog["leftOut"] = []
+    session.queue(body=catalog)
+
+    client.train.list_frameworks()
+
+    assert not [w for w in recwarn if "Left out" in str(w.message)]
 
 
 def test_list_frameworks_warns_when_capped(train_session):
@@ -215,6 +265,34 @@ def test_get_suggestions(train_session):
     method, url, kwargs = session.calls[0]
     assert (method, url) == ("POST", "https://api.test/v2/train/suggestions")
     assert "horizon" not in kwargs["json"]
+
+
+def test_a_suggestion_buys_through_explorer_as_priced(train_session):
+    """power-api returns each suggestion's priced framework in the shape
+    /v2/framework/buy takes (PRO-6737), so the SDK's one buy path takes it
+    as is."""
+    client, session = train_session
+    session.queue(body=load_fixture("train/suggestions.json"))
+    suggestion = client.train.get_suggestions(
+        [FW], target=f"{FW}:card_spend", window_start="2019-01", cutoff="2025-09"
+    )["suggestions"][0]
+    posted = []
+
+    def fake_post(url, auth=None, data=None, json=None, **kwargs):
+        posted.append((url, json))
+        return make_response(body={"orders": []})
+
+    client.explorer.request_manager.request_session.post = fake_post
+
+    client.explorer.buy_frameworks(suggestion["framework"])
+
+    url, body = posted[0]
+    assert url.endswith("/framework/buy")
+    framework = body["order"]["frameworks"][0]
+    assert framework["insight"] == {"insight_id": 775}
+    assert framework["entities"] == suggestion["framework"]["entities"]
+    assert framework["filters"] == {"date_resolution": "month"}
+    assert framework["aggregate"] == "sum"
 
 
 # -- Refusal codes (the contract on PRO-5784) ----------------------------------

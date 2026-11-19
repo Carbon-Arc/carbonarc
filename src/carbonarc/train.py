@@ -69,15 +69,18 @@ class TrainAPIClient(BaseAPIClient):
         self,
         search: Optional[str] = None,
         framework_ids: Optional[List[str]] = None,
+        include_untrainable: bool = False,
     ) -> List[dict]:
-        """List the frameworks your account bought, each with whether it can
-        be trained.
+        """List the frameworks your account bought that Train can train on,
+        as the New model page offers them.
 
         A framework can be trained when its data's training rights allow it
         (``trainable``) and Train can build training data from it
-        (``trainingNote`` is null). :func:`frameworks_to_dataframe` combines
-        the two into one ``trainable`` column with the reason, as the New
-        model page shows them.
+        (``trainingNote`` is null). The rest are left out, and a warning
+        says how many and why; pass ``include_untrainable=True`` to list
+        them too. :func:`frameworks_to_dataframe` then combines the two into
+        one ``trainable`` column with the reason, in the New model page's
+        words.
 
         At most 50 come back, the larger purchases first, then the newest. A
         warning says when there are more; narrow the list with ``search``.
@@ -85,8 +88,10 @@ class TrainAPIClient(BaseAPIClient):
         Args:
             search: Keep only frameworks whose name, order name, insight or
                 companies contain this text.
-            framework_ids: List these frameworks instead, by id. Not with
-                ``search``.
+            framework_ids: List these frameworks instead, by id, trainable
+                or not. Not with ``search``.
+            include_untrainable: Also list the frameworks Train can't train
+                on.
 
         Returns:
             One dict per framework: ``id``, ``name``, ``trainable``,
@@ -105,9 +110,23 @@ class TrainAPIClient(BaseAPIClient):
             params["q"] = search
         if framework_ids is not None:
             params["ids"] = list(framework_ids)
+        elif not include_untrainable:
+            params["trainable"] = "true"
         catalog = self._train_request("GET", "/frameworks", params=params)
         frameworks = catalog.get("frameworks", [])
         total = catalog.get("total", len(frameworks))
+        left_out = catalog.get("leftOutTotal") or 0
+        if left_out:
+            reasons = "".join(
+                f"\n- {len(group.get('frameworks') or [])}: {group.get('reason')}"
+                for group in catalog.get("leftOut") or []
+            )
+            warnings.warn(
+                f"Left out {left_out} framework{'' if left_out == 1 else 's'} "
+                "Train can't train on. Pass include_untrainable=True to list "
+                f"them.{reasons}",
+                stacklevel=2,
+            )
         if total > len(frameworks):
             warnings.warn(
                 f"Listing {len(frameworks)} of {total} frameworks. "
@@ -195,9 +214,12 @@ class TrainAPIClient(BaseAPIClient):
 
         Returns:
             Dict with ``suggestions``, best first (each with ``name``,
-            ``insightId``, ``coverage``, ``score``, ``reason`` and Builder's
-            ``price`` in tokens), and ``scored``: false when the lookup
-            couldn't be made, with ``note`` saying why.
+            ``insightId``, ``coverage``, ``score``, ``reason``, Builder's
+            ``price`` in tokens and the ``framework`` it priced), and
+            ``scored``: false when the lookup couldn't be made, with
+            ``note`` saying why. Buy a suggestion with
+            ``client.explorer.buy_frameworks(suggestion["framework"])``: it
+            buys exactly what ``price`` quoted.
 
         Raises:
             TrainNotEnabled: Train isn't turned on for this account.

@@ -11,7 +11,30 @@
       "score": 0.37,
       "reason": "Visits lead card spend by a month for most of these companies.",
       "price": 1200.0,
-      "companyIds": [101, 102]
+      "companyIds": [
+        101,
+        102
+      ],
+      "framework": {
+        "entities": [
+          {
+            "carc_id": 101,
+            "representation": "company"
+          },
+          {
+            "carc_id": 102,
+            "representation": "company"
+          }
+        ],
+        "insight": {
+          "insight_id": 775
+        },
+        "filters": {
+          "date_resolution": "month"
+        },
+        "aggregate": "sum",
+        "events": null
+      }
     }
   ]
 }

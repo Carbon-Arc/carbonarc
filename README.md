@@ -49,16 +49,27 @@ Find what you can train on:
 ```python
 from carbonarc.train import frameworks_to_dataframe
 
-frameworks = client.train.list_frameworks()   # frameworks your account bought, at most 50
+frameworks = client.train.list_frameworks()   # frameworks you bought that Train can train on, at most 50
 frameworks = client.train.list_frameworks(search="card spend")
-frameworks_to_dataframe(frameworks)           # one row each: trainable, and the reason when not
+everything = client.train.list_frameworks(include_untrainable=True)  # the rest too
+frameworks_to_dataframe(everything)           # one row each: trainable, and the reason when not
 
 framework_id = frameworks[0]["id"]
 sample = client.train.get_framework_sample(framework_id)  # newest rows and each company's months
 
 target = f"{framework_id}:card_spend"         # metric keys are in each framework's "metrics"
 client.train.get_features([framework_id], target, window_start="2019-01", cutoff="2025-09")
-client.train.get_suggestions([framework_id], target, window_start="2019-01", cutoff="2025-09")
+```
+
+Buy data that could help, then train on it. Each suggestion carries the framework Builder priced, so buying it costs what `price` says:
+
+```python
+found = client.train.get_suggestions([framework_id], target, window_start="2019-01", cutoff="2025-09")
+best = found["suggestions"][0]                # name, reason, coverage, price in tokens
+order = client.explorer.buy_frameworks(best["framework"])
+
+# Once the purchase is built (client.explorer.get_framework_status says when), it's listed here:
+frameworks = client.train.list_frameworks(search=best["name"])
 ```
 
 Methods return the API's JSON with its keys as sent (camelCase). A refusal raises an exception from `carbonarc.utils.exceptions`:
