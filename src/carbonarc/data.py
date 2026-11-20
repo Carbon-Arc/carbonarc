@@ -201,6 +201,10 @@ class DataAPIClient(BaseAPIClient):
         """
         Retrieve all insights associated with a specific dataset.
 
+        Each insight carries ``available_entity_representations``: the
+        representations you can pass to ``client.explorer.build_framework`` as
+        ``entities`` to request every entity of that type for the insight.
+
         Args:
             dataset_id: The identifier of the dataset to retrieve insights for.
 
