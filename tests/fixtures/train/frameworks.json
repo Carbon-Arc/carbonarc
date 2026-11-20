@@ -1,0 +1,94 @@
+{
+  "source": "cams",
+  "total": 3,
+  "frameworks": [
+    {
+      "id": "6f1c2b9e-0d5a-4a43-9a4e-1b2f3c4d5e01",
+      "name": "Card spend, top retailers",
+      "entitySummary": "24 companies",
+      "entities": ["Walmart", "Target"],
+      "insights": ["Card Spend"],
+      "series": 24,
+      "windowStart": "2019-01",
+      "windowEnd": "2026-09",
+      "grain": "monthly",
+      "trainingNote": null,
+      "metrics": [{"key": "card_spend", "name": "Card Spend"}],
+      "mightSplit": false,
+      "reinstatement": null,
+      "replacedBy": null,
+      "datasetName": "Fawn · Card spend",
+      "panel": "United States - Constant Shopper",
+      "measureDescription": "Total card spend in the month.",
+      "orderId": "ord_1",
+      "trainability": "yes",
+      "trainable": true,
+      "grant": {
+        "state": "granted",
+        "permitsTraining": true,
+        "accountScoped": false,
+        "reasonText": null,
+        "ontologyVersion": "2026.10"
+      },
+      "datasetId": "CA0056",
+      "supplierName": "Fawn"
+    },
+    {
+      "id": "6f1c2b9e-0d5a-4a43-9a4e-1b2f3c4d5e02",
+      "name": "Web visits, airlines",
+      "entitySummary": "12 companies",
+      "entities": [],
+      "insights": ["Visits"],
+      "series": 12,
+      "windowStart": "2021-01",
+      "windowEnd": "2026-09",
+      "grain": "monthly",
+      "trainingNote": null,
+      "metrics": [{"key": "visits", "name": "Visits"}],
+      "mightSplit": false,
+      "trainability": "not_negotiated",
+      "trainable": false,
+      "grant": {
+        "state": "not_negotiated",
+        "permitsTraining": false,
+        "accountScoped": false,
+        "reasonText": "No training terms negotiated.",
+        "ontologyVersion": "2026.10"
+      },
+      "datasetId": "CA0101",
+      "supplierName": "Otter"
+    },
+    {
+      "id": "6f1c2b9e-0d5a-4a43-9a4e-1b2f3c4d5e03",
+      "name": "Card spend by state",
+      "entitySummary": "3 companies",
+      "entities": ["Costco"],
+      "insights": ["Card Spend"],
+      "series": 3,
+      "windowStart": null,
+      "windowEnd": "2026-09",
+      "grain": "monthly",
+      "trainingNote": "Train needs at least 10 series; this purchase has 3.",
+      "metrics": [],
+      "mightSplit": true,
+      "trainability": "yes",
+      "trainable": true,
+      "grant": {
+        "state": "granted",
+        "permitsTraining": true,
+        "accountScoped": false,
+        "reasonText": null,
+        "ontologyVersion": "2026.10"
+      },
+      "datasetId": "CA0056",
+      "supplierName": "Fawn"
+    }
+  ],
+  "forecast": {
+    "defaultHorizonMonths": 12,
+    "minHorizonMonths": 1,
+    "maxHorizonMonths": 24,
+    "lastYearMonths": 12,
+    "minWindowMonths": {"tabicl": [13, 14]}
+  }
+}

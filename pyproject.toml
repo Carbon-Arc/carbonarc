@@ -33,3 +33,9 @@ types-requests = "^2.31.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: calls a real Carbon Arc API; skipped unless CARBONARC_TOKEN and CARBONARC_HOST are set",
+]
