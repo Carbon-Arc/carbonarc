@@ -174,8 +174,10 @@ class TrainAPIClient(BaseAPIClient):
 
         Args:
             framework_ids: Ids of frameworks your account bought.
-            target: The measure to predict, as ``"<framework id>:<metric>"``
-                (metric keys are in each framework's ``metrics``).
+            target: The measure to predict: a metric key such as
+                ``"card_spend"`` when exactly one of ``framework_ids`` has
+                it, or else ``"<framework id>:<metric>"``. Metric keys are
+                in each framework's ``metrics``.
             window_start: First month the scores read, ``YYYY-MM``.
             cutoff: Last month the scores read, ``YYYY-MM``.
             horizon: Months ahead the run forecasts. Each feature is scored
